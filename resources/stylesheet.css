@@ -1,0 +1,46 @@
+/* Javadoc style sheet */
+/* Define colors, fonts and other style attributes here to override the defaults */
+
+body {
+	font-size: 13px;
+}
+
+body, .FrameHeadingFont, .FrameItemFont {
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+h1 {
+	font-size: 20px; 
+}
+
+.FrameTitleFont, .FrameHeadingFont {
+	display: block;
+	font-size: 14px;
+	padding-top: 16px;
+	margin-bottom: -10px;
+}
+
+pre, code {
+	font-family: Courier, monospace;
+}
+
+hr {
+	border:none;
+	border-top: solid #999 1px;
+}
+
+a, a:visited, a:link {
+	color: #1240ab;
+}
+
+.NavBarCell1 {
+	background-color: #f0f0f0;
+}
+
+.TableHeadingColor {
+	background-color: #c9c9c9;
+}
+
+.TableHeadingColor font b {
+	font-size: 16px;
+}
