@@ -34,7 +34,7 @@ public class UIChannelControl extends UIWindow {
   private final static int KNOBS_PER_ROW = 4;
 
   public final static int DEFAULT_WIDTH = 140;
-  public final static int DEFAULT_HEIGHT = 324;
+  public final static int DEFAULT_HEIGHT = 318;
 
   public UIChannelControl(UI ui, LX lx, float x, float y) {
     this(ui, lx, "PATTERN", x, y);
