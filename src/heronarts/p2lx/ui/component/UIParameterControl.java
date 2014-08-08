@@ -66,7 +66,7 @@ public abstract class UIParameterControl extends UIObject implements
   }
 
   @Override
-  public void onKeyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
+  protected void onKeyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
     if (this.parameter instanceof DiscreteParameter) {
       DiscreteParameter dp = (DiscreteParameter) this.parameter;
       int times = keyEvent.isShiftDown() ? Math.max(1, dp.getRange() / 10) : 1;

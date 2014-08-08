@@ -88,7 +88,7 @@ public class P2LX extends LX {
 
   public final Timer timer = new Timer();
 
-  P2LX(PApplet applet, LXModel model) {
+  public P2LX(PApplet applet, LXModel model) {
     super(model);
     this.applet = applet;
     this.buffer = new int[this.total];
