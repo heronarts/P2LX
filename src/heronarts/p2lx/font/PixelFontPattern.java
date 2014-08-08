@@ -36,7 +36,7 @@ public class PixelFontPattern extends P2LXPattern {
   public PixelFontPattern(P2LX lx, String s) {
     super(lx);
     this.image = (new PixelFont(lx)).drawString(s);
-    this.addModulator(this.hMod.trigger());
+    this.addModulator(this.hMod).trigger();
     this.addModulator(
         this.pMod.setRange(-lx.width, this.image.width, this.image.width * 250))
         .trigger();
