@@ -33,8 +33,8 @@ public class UIChannelControl extends UIWindow {
   private final static int NUM_KNOBS = 12;
   private final static int KNOBS_PER_ROW = 4;
 
-  public final static int DEFAULT_WIDTH = 140;
-  public final static int DEFAULT_HEIGHT = 318;
+  public final static int WIDTH = 140;
+  public final static int HEIGHT = 318;
 
   public UIChannelControl(UI ui, LX lx, float x, float y) {
     this(ui, lx, "PATTERN", x, y);
@@ -49,7 +49,7 @@ public class UIChannelControl extends UIWindow {
   }
 
   public UIChannelControl(UI ui, LXChannel channel, String label, float x, float y) {
-    this(ui, channel, label, x, y, DEFAULT_WIDTH, DEFAULT_HEIGHT);
+    this(ui, channel, label, x, y, WIDTH, HEIGHT);
   }
 
   public UIChannelControl(UI ui, LXChannel channel, String label, float x, float y,

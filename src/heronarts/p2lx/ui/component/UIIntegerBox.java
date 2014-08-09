@@ -31,6 +31,9 @@ public class UIIntegerBox extends UIObject implements UIFocus {
   private int value = 0;
   private DiscreteParameter parameter = null;
 
+  private boolean editing = false;
+  private String editBuffer = "";
+
   private final LXParameterListener parameterListener = new LXParameterListener() {
     public void onParameterChanged(LXParameter p) {
       setValue(parameter.getValuei());
@@ -92,14 +95,23 @@ public class UIIntegerBox extends UIObject implements UIFocus {
   protected void onDraw(UI ui, PGraphics pg) {
     pg.textAlign(PConstants.CENTER, PConstants.CENTER);
     pg.textFont(ui.getItemFont());
-    pg.fill(ui.getTextColor());
-    pg.text("" + this.value, this.width / 2, this.height / 2);
+    pg.fill(this.editing ? ui.getHighlightColor() : ui.getTextColor());
+    pg.text(this.editing ? this.editBuffer : ("" + this.value), this.width / 2, this.height / 2);
   }
 
   protected void onValueChange(int value) {
   }
 
   float dAccum = 0;
+
+  @Override
+  protected void onBlur() {
+    super.onBlur();
+    if (this.editing) {
+      this.editing = false;
+      setValue(Integer.valueOf(this.editBuffer));
+    }
+  }
 
   @Override
   protected void onMousePressed(float mx, float my) {
@@ -116,6 +128,24 @@ public class UIIntegerBox extends UIObject implements UIFocus {
 
   @Override
   public void onKeyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
+    if (keyChar >= '0' && keyChar <= '9') {
+      if (!this.editing) {
+        this.editing = true;
+        this.editBuffer = "";
+      }
+      this.editBuffer += keyChar;
+      redraw();
+    }
+    if (keyCode == java.awt.event.KeyEvent.VK_ENTER) {
+      if (this.editing) {
+        this.editing = false;
+        setValue(Integer.valueOf(this.editBuffer));
+      }
+    } else if (keyCode == java.awt.event.KeyEvent.VK_ESCAPE) {
+      this.editing = false;
+      redraw();
+    }
+
     int times = 1;
     if (this.parameter != null) {
       if (keyEvent.isShiftDown()) {
