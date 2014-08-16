@@ -23,14 +23,14 @@ import processing.core.PConstants;
  */
 public class UIPointCloud extends UICameraComponent {
 
-  private final P2LX lx;
+  protected final P2LX lx;
 
-  private final LXModel model;
+  protected final LXModel model;
 
   /**
    * Weight of points
    */
-  private float pointWeight = 1;
+  protected float pointWeight = 1;
 
   /**
    * Point cloud for everything in the LX instance
