@@ -13,8 +13,8 @@
 
 package heronarts.p2lx.ui.component;
 
-import heronarts.lx.LXColor;
 import heronarts.lx.LXUtils;
+import heronarts.lx.color.LXColor;
 import heronarts.lx.parameter.DiscreteParameter;
 import heronarts.lx.parameter.LXParameter;
 import heronarts.lx.parameter.LXParameterListener;

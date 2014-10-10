@@ -15,7 +15,7 @@ package heronarts.p2lx.font;
 
 import heronarts.p2lx.P2LX;
 import heronarts.p2lx.P2LXPattern;
-import heronarts.lx.LXColor;
+import heronarts.lx.color.LXColor;
 import heronarts.lx.modulator.SawLFO;
 import processing.core.PApplet;
 import processing.core.PImage;

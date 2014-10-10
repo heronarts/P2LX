@@ -15,8 +15,8 @@ package heronarts.p2lx.ui.control;
 
 import processing.core.PApplet;
 import processing.core.PGraphics;
-import heronarts.lx.LXColor;
 import heronarts.lx.audio.FrequencyGate;
+import heronarts.lx.color.LXColor;
 import heronarts.p2lx.ui.UI;
 import heronarts.p2lx.ui.UIWindow;
 import heronarts.p2lx.ui.component.UIKnob;
