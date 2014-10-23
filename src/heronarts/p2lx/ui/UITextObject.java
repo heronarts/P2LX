@@ -98,7 +98,7 @@ public abstract class UITextObject extends UIObject {
    * @param hasFontColor true or false
    * @return this
    */
-  public UIObject setFontColor(boolean hasFontColor) {
+  public UITextObject setFontColor(boolean hasFontColor) {
     if (this.hasFontColor != hasFontColor) {
       this.hasFontColor = hasFontColor;
       redraw();
@@ -112,7 +112,7 @@ public abstract class UITextObject extends UIObject {
    * @param fontColor color
    * @return this
    */
-  public UIObject setFontColor(int fontColor) {
+  public UITextObject setFontColor(int fontColor) {
     if (!this.hasFontColor|| (this.fontColor != fontColor)) {
       this.hasFontColor = true;
       this.fontColor = fontColor;

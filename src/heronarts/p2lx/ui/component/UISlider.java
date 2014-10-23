@@ -61,6 +61,8 @@ public class UISlider extends UIParameterControl implements UIFocus {
     switch (this.direction) {
     case HORIZONTAL:
       pg.rect(4, this.height / 2 - 2, this.width - 8, 4);
+      pg.fill(isEnabled() ? ui.theme.getPrimaryColor() : ui.theme.getControlDisabledColor());
+      pg.rect(4, this.height / 2 - 2, (int) ((this.width - 8) * getNormalized()), 4);
       pg.fill(0xff666666);
       pg.stroke(0xff222222);
       pg.rect((int) (4 + getNormalized() * (this.width - 8 - HANDLE_WIDTH)), 4,
@@ -68,6 +70,9 @@ public class UISlider extends UIParameterControl implements UIFocus {
       break;
     case VERTICAL:
       pg.rect(this.width / 2 - 2, 4, 4, this.height - 8);
+      pg.fill(isEnabled() ? ui.theme.getPrimaryColor() : ui.theme.getControlDisabledColor());
+      int fillSize = (int) (getNormalized() * (this.height - 8));
+      pg.rect(this.width / 2 - 2, this.height - 4 - fillSize, 4, fillSize);
       pg.fill(0xff666666);
       pg.stroke(0xff222222);
       pg.rect(4, (int) (4 + (1 - getNormalized())
@@ -127,7 +132,7 @@ public class UISlider extends UIParameterControl implements UIFocus {
 
   @Override
   protected void onMouseDragged(float mx, float my, float dx, float dy) {
-    if (this.editing) {
+    if (isEnabled() && this.editing) {
       float mp, dim;
       switch (this.direction) {
       case VERTICAL:

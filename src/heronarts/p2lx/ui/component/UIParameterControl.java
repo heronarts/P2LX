@@ -37,8 +37,22 @@ public abstract class UIParameterControl extends UIObject implements
 
   protected LXListenableNormalizedParameter parameter = null;
 
+  protected boolean enabled = true;
+
   protected UIParameterControl(float x, float y, float w, float h) {
     super(x, y, w, h);
+  }
+
+  public UIParameterControl setEnabled(boolean enabled) {
+    if (enabled != this.enabled) {
+      this.enabled = enabled;
+      redraw();
+    }
+    return this;
+  }
+
+  public boolean isEnabled() {
+    return (this.parameter != null) && this.enabled;
   }
 
   public void onParameterChanged(LXParameter parameter) {
@@ -77,6 +91,9 @@ public abstract class UIParameterControl extends UIObject implements
 
   @Override
   protected void onKeyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
+    if (!isEnabled()) {
+      return;
+    }
     if (this.parameter instanceof DiscreteParameter) {
       DiscreteParameter dp = (DiscreteParameter) this.parameter;
       int times = keyEvent.isShiftDown() ? Math.max(1, dp.getRange() / 10) : 1;

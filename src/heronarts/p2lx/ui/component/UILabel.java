@@ -27,7 +27,6 @@ package heronarts.p2lx.ui.component;
 import heronarts.p2lx.ui.UI;
 import heronarts.p2lx.ui.UITextObject;
 import processing.core.PConstants;
-import processing.core.PFont;
 import processing.core.PGraphics;
 
 /**
@@ -41,11 +40,6 @@ public class UILabel extends UITextObject {
   private int verticalAlignment = PConstants.TOP;
 
   private int padding = 0;
-
-  /**
-   * Label color
-   */
-  private int color = 0xFFCCCCCC;
 
   /**
    * Label text
@@ -85,9 +79,8 @@ public class UILabel extends UITextObject {
 
   @Override
   protected void onDraw(UI ui, PGraphics pg) {
-    PFont font = getFont();
-    pg.textFont((font == null) ? ui.getTitleFont() : font);
-    pg.fill(this.color);
+    pg.textFont(hasFont() ? getFont() : ui.theme.getLabelFont());
+    pg.fill(hasFontColor() ? getFontColor() : ui.theme.getLabelColor());
     float tx = this.padding, ty = this.padding;
     switch (this.horizontalAlignment) {
     case PConstants.CENTER:
@@ -110,14 +103,6 @@ public class UILabel extends UITextObject {
     }
     pg.textAlign(this.horizontalAlignment, this.verticalAlignment);
     pg.text(this.label, tx, ty);
-  }
-
-  public UILabel setColor(int color) {
-    if (this.color != color) {
-      this.color = color;
-      redraw();
-    }
-    return this;
   }
 
   public UILabel setLabel(String label) {

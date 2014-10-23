@@ -80,7 +80,11 @@ public class UIToggleSet extends UITextObject implements UIFocus,
       this.parameter = parameter;
       if (this.parameter != null) {
         this.parameter.addListener(this);
-        setValue(this.options[this.parameter.getValuei()]);
+        String[] options = this.parameter.getOptions();
+        if (options != null) {
+          setOptions(options);
+        }
+        setValue(this.parameter.getValuei());
       }
     }
     return this;
@@ -165,8 +169,8 @@ public class UIToggleSet extends UITextObject implements UIFocus,
 
   @Override
   public void onDraw(UI ui, PGraphics pg) {
-    pg.stroke(0xff666666);
-    pg.fill(0xff222222);
+    pg.stroke(ui.theme.getControlBorderColor());
+    pg.fill(ui.theme.getControlBackgroundColor());
     pg.rect(0, 0, this.width, this.height);
     for (int b : this.boundaries) {
       pg.line(b, 1, b, this.height - 1);
@@ -174,17 +178,17 @@ public class UIToggleSet extends UITextObject implements UIFocus,
 
     pg.noStroke();
     pg.textAlign(PConstants.CENTER, PConstants.CENTER);
-    pg.textFont(hasFont() ? getFont() : ui.getItemFont());
+    pg.textFont(hasFont() ? getFont() : ui.theme.getControlFont());
     int leftBoundary = 0;
 
     for (int i = 0; i < this.options.length; ++i) {
       boolean isActive = (i == this.value);
       if (isActive) {
-        pg.fill(ui.getHighlightColor());
+        pg.fill(ui.theme.getPrimaryColor());
         pg.rect(leftBoundary + 1, 1, this.boundaries[i] - leftBoundary - 1,
             this.height - 1);
       }
-      pg.fill(isActive ? ui.WHITE : ui.getTextColor());
+      pg.fill(isActive ? ui.WHITE : ui.theme.getControlTextColor());
       pg.text(this.options[i], (leftBoundary + this.boundaries[i]) / 2.f,
           (int) ((this.height / 2) - 2));
       leftBoundary = this.boundaries[i];

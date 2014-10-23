@@ -143,14 +143,16 @@ public class UIItemList extends UITextObject implements UIFocus {
       int itemIndex = i + so;
       Item item = this.items.get(itemIndex);
       int itemColor;
-      int labelColor = ui.WHITE;
+      int labelColor;
       if (item.isSelected()) {
-        itemColor = ui.getHighlightColor();
+        labelColor = ui.WHITE;
+        itemColor = ui.theme.getPrimaryColor();
       } else if (item.isPending()) {
-        itemColor = ui.getSelectionColor();
+        labelColor = 0xfff0f0f0;
+        itemColor = ui.theme.getSecondaryColor();
       } else {
         labelColor = ui.BLACK;
-        itemColor = 0xff707070;
+        itemColor = ui.theme.getControlDisabledColor();
       }
       float factor = even ? .92f : 1.08f;
       itemColor = LXColor.scaleBrightness(itemColor, factor);
@@ -159,12 +161,12 @@ public class UIItemList extends UITextObject implements UIFocus {
       pg.fill(itemColor);
       pg.rect(0, yp, this.width, this.itemHeight);
       pg.fill(labelColor);
-      pg.textFont(hasFont() ? getFont() : ui.getItemFont());
+      pg.textFont(hasFont() ? getFont() : ui.theme.getControlFont());
       pg.textAlign(PConstants.LEFT, PConstants.TOP);
       pg.text(item.getLabel(), 6, yp + 4);
 
       if (itemIndex == fi) {
-        pg.stroke(item.isSelected() ? 0xff999999 : ui.getFocusColor());
+        pg.stroke(item.isSelected() ? ui.theme.getControlTextColor() : ui.theme.getFocusColor());
         pg.noFill();
         pg.rect(0, yp, this.width - 1, this.itemHeight - 1);
       }
@@ -176,8 +178,8 @@ public class UIItemList extends UITextObject implements UIFocus {
       pg.noStroke();
       pg.fill(0x26ffffff);
       pg.rect(this.width - 12, 0, 12, this.height);
-      pg.fill(0xff333333);
-      pg.rect(this.width - 12, this.scrollYStart, 12, this.scrollYHeight);
+      pg.fill(ui.theme.getControlBackgroundColor());
+      pg.rect(this.width - 11, this.scrollYStart+1, 10, this.scrollYHeight-2);
     }
 
   }

@@ -69,7 +69,7 @@ public class UIColorSwatch extends UIObject implements UIFocus {
     // Cursor
     pg.strokeWeight(1);
     pg.noFill();
-    pg.stroke(ui.getWindowBorderColor());
+    pg.stroke(ui.theme.getWindowBorderColor());
     pg.rect(
       this.color.hue.getNormalizedf() * (this.width-RECT_SIZE-1),
       (1-this.color.saturation.getNormalizedf()) * (this.height-RECT_SIZE-1),

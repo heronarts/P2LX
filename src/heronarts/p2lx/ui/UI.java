@@ -24,12 +24,17 @@
 
 package heronarts.p2lx.ui;
 
+import heronarts.lx.LXLoopTask;
+import heronarts.p2lx.P2LX;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import processing.core.PApplet;
-import processing.core.PFont;
+import processing.event.Event;
 import processing.event.KeyEvent;
+import processing.event.MouseEvent;
 
 /**
  * Top-level container for all overlay UI elements.
@@ -37,6 +42,37 @@ import processing.event.KeyEvent;
 public class UI {
 
   private static UI instance = null;
+
+  /**
+   * Redraw may be called from any thread
+   */
+  private final List<UIObject> otherThreadRedrawList =
+    Collections.synchronizedList(new ArrayList<UIObject>());
+
+  /**
+   * Objects to redraw on current pass thru animation thread
+   */
+  private final List<UIObject> localThreadRedrawList =
+    new ArrayList<UIObject>();
+
+  /**
+   * Input events coming from the event thread
+   */
+  private final List<Event> eventThreadInputEventQueue =
+    Collections.synchronizedList(new ArrayList<Event>());
+
+  /**
+   * Events on the local processing thread
+   */
+  private final List<Event> localThreadInputEvents = new ArrayList<Event>();
+
+  public class Timer {
+    public long drawNanos = 0;
+  }
+
+  public final Timer timer = new Timer();
+
+  private final P2LX lx;
 
   /**
    * PApplet that this UI belongs to
@@ -47,6 +83,8 @@ public class UI {
    * All the layers in this UI
    */
   private final List<UILayer> layers = new ArrayList<UILayer>();
+
+  private final List<UILayer> localThreadLayers = new ArrayList<UILayer>();
 
   private final List<UIObject> focusables = new ArrayList<UIObject>();
 
@@ -63,44 +101,9 @@ public class UI {
   private UILayer focusedLayer = null;
 
   /**
-   * Default item font in this UI
+   * UI look and feel
    */
-  private PFont itemFont;
-
-  /**
-   * Default title font in this UI
-   */
-  private PFont titleFont;
-
-  /**
-   * Default text color
-   */
-  private int textColor = 0xff999999;
-
-  /**
-   * Default background color
-   */
-  private int backgroundColor = 0xff444444;
-
-  /**
-   * Default border color
-   */
-  private int windowBorderColor = 0xff292929;
-
-  /**
-   * Default focus color
-   */
-  private int focusColor = 0xff669966;
-
-  /**
-   * Default selected highlight color
-   */
-  private int highlightColor = 0xff669966;
-
-  /**
-   * Default active highlight color
-   */
-  private int selectionColor = 0xff666699;
+  public final UITheme theme;
 
   /**
    * White color
@@ -112,15 +115,29 @@ public class UI {
    */
   public final int BLACK = 0xff000000;
 
+  public UI(P2LX lx) {
+    this(lx.applet, lx);
+  }
+
   /**
    * Creates a new UI instance
    *
    * @param applet The PApplet
    */
   public UI(PApplet applet) {
+    this(applet, null);
+  }
+
+  private UI(PApplet applet, P2LX lx) {
+    this.lx = lx;
     this.applet = applet;
-    this.itemFont = applet.createFont("Lucida Grande", 11);
-    this.titleFont = applet.createFont("Myriad Pro", 10);
+    this.theme = new UITheme(applet);
+    applet.registerMethod("draw", this);
+    applet.registerMethod("keyEvent", this);
+    applet.registerMethod("mouseEvent", this);
+    if (lx != null) {
+      lx.engine.addLoopTask(new EngineUILoopTask());
+    }
     UI.instance = this;
   }
 
@@ -135,9 +152,14 @@ public class UI {
    * @return this UI
    */
   public UI addLayer(UILayer layer) {
-    this.layers.add(layer);
+    synchronized (this.layers) {
+      this.layers.add(layer);
+    }
     if (layer instanceof UIObject) {
-      addFocusables((UIObject) layer);
+      UIObject object = (UIObject) layer;
+      object.setUI(this);
+      object.redraw();
+      addFocusables(object);
     }
     return this;
   }
@@ -211,7 +233,9 @@ public class UI {
     if (layer instanceof UIContext) {
       ((UIObject) layer)._blur();
     }
-    this.layers.remove(layer);
+    synchronized (this.layers) {
+      this.layers.remove(layer);
+    }
     if (layer instanceof UIObject) {
       removeFocusables((UIObject) layer);
     }
@@ -225,181 +249,100 @@ public class UI {
    * @return this UI
    */
   public UI bringToTop(UILayer layer) {
-    this.layers.remove(layer);
-    this.layers.add(layer);
+    synchronized (this.layers) {
+      this.layers.remove(layer);
+      this.layers.add(layer);
+    }
     return this;
   }
 
-  /**
-   * Gets the default item font for this UI
-   *
-   * @return The default item font for this UI
-   */
-  public PFont getItemFont() {
-    return this.itemFont;
-  }
-
-  /**
-   * Sets the default item font for this UI
-   *
-   * @param font Font to use
-   * @return this UI
-   */
-  public UI setItemFont(PFont font) {
-    this.itemFont = font;
-    return this;
-  }
-
-  /**
-   * Gets the default title font for this UI
-   *
-   * @return default title font for this UI
-   */
-  public PFont getTitleFont() {
-    return this.titleFont;
-  }
-
-  /**
-   * Sets the default title font for this UI
-   *
-   * @param font Default title font
-   * @return this UI
-   */
-  public UI setTitleFont(PFont font) {
-    this.titleFont = font;
-    return this;
-  }
-
-  /**
-   * Gets the default text color
-   *
-   * @return default text color
-   */
-  public int getTextColor() {
-    return this.textColor;
-  }
-
-  /**
-   * Sets the default text color for UI
-   *
-   * @param color Color
-   * @return this UI
-   */
-  public UI setTextColor(int color) {
-    this.textColor = color;
-    return this;
-  }
-
-  /**
-   * Gets background color
-   *
-   * @return background color
-   */
-  public int getBackgroundColor() {
-    return this.backgroundColor;
-  }
-
-  /**
-   * Sets default background color
-   *
-   * @param color color
-   * @return this UI
-   */
-  public UI setBackgroundColor(int color) {
-    this.backgroundColor = color;
-    return this;
-  }
-
-  /**
-   * Gets border color
-   *
-   * @return bordercolor
-   */
-  public int getWindowBorderColor() {
-    return this.windowBorderColor;
-  }
-
-  /**
-   * Sets default border color
-   *
-   * @param color color
-   * @return this UI
-   */
-  public UI setWindowBorderColor(int color) {
-    this.windowBorderColor = color;
-    return this;
-  }
-
-  /**
-   * Gets highlight color
-   *
-   * @return Highlight color
-   */
-  public int getHighlightColor() {
-    return this.highlightColor;
-  }
-
-  /**
-   * Sets highlight color
-   *
-   * @param color
-   * @return this UI
-   */
-  public UI setHighlightColor(int color) {
-    this.highlightColor = color;
-    return this;
-  }
-
-  /**
-   * Gets focus color
-   *
-   * @return focus color
-   */
-  public int getFocusColor() {
-    return this.focusColor;
-  }
-
-  /**
-   * Sets highlight color
-   *
-   * @param color
-   * @return this UI
-   */
-  public UI setFocusColor(int color) {
-    this.focusColor = color;
-    return this;
-  }
-
-  /**
-   * Get active color
-   *
-   * @return Selection color
-   */
-  public int getSelectionColor() {
-    return this.selectionColor;
-  }
-
-  /**
-   * Set active color
-   *
-   * @param color Color
-   * @return this UI
-   */
-  public UI setSelectionColor(int color) {
-    this.selectionColor = color;
-    return this;
+  void redraw(UIObject object) {
+    this.otherThreadRedrawList.add(object);
   }
 
   /**
    * Draws the UI
    */
   public final void draw() {
-    for (UILayer layer : this.layers) {
+    long drawStart = System.nanoTime();
+    this.localThreadRedrawList.clear();
+    synchronized (this.otherThreadRedrawList) {
+      this.localThreadRedrawList.addAll(this.otherThreadRedrawList);
+      this.otherThreadRedrawList.clear();
+    }
+    for (UIObject object : this.localThreadRedrawList) {
+      object._redraw();
+    }
+
+    // Make a local copy of the layers to draw in this pass, other threads
+    // could modify the layer stack as we're drawing
+    this.localThreadLayers.clear();
+    synchronized (this.layers) {
+      this.localThreadLayers.addAll(this.layers);
+    }
+    for (UILayer layer : this.localThreadLayers) {
       layer.draw();
+    }
+
+    this.timer.drawNanos = System.nanoTime() - drawStart;
+  }
+
+  boolean isThreaded() {
+    return (this.lx != null) && (this.lx.engine.isThreaded());
+  }
+
+  private class EngineUILoopTask implements LXLoopTask {
+
+    @Override
+    public void loop(double deltaMs) {
+      // This is invoked on the LXEngine thread, which may be different
+      // from the Processing Animation thread. Events need to be
+      // processed on that thread to avoid threading bugs
+      localThreadInputEvents.clear();
+      synchronized (eventThreadInputEventQueue) {
+        localThreadInputEvents.addAll(eventThreadInputEventQueue);
+        eventThreadInputEventQueue.clear();
+      }
+      for (Event event : localThreadInputEvents) {
+        if (event instanceof KeyEvent) {
+          _keyEvent((KeyEvent) event);
+        } else if (event instanceof MouseEvent) {
+          _mouseEvent((MouseEvent) event);
+        }
+      }
+    }
+
+  }
+
+  public void mouseEvent(MouseEvent mouseEvent) {
+    if (isThreaded()) {
+      this.eventThreadInputEventQueue.add(mouseEvent);
+    } else {
+      _mouseEvent(mouseEvent);
     }
   }
 
-  public final void mousePressed(int x, int y) {
+  private void _mouseEvent(MouseEvent mouseEvent) {
+    switch (mouseEvent.getAction()) {
+    case MouseEvent.WHEEL:
+      mouseWheel(mouseEvent.getX(), mouseEvent.getY(), mouseEvent.getCount());
+      return;
+    case MouseEvent.PRESS:
+      mousePressed(mouseEvent.getX(), mouseEvent.getY());
+      break;
+    case processing.event.MouseEvent.RELEASE:
+      mouseReleased(mouseEvent.getX(), mouseEvent.getY());
+      break;
+    case processing.event.MouseEvent.CLICK:
+      mouseClicked(mouseEvent.getX(), mouseEvent.getY());
+      break;
+    case processing.event.MouseEvent.DRAG:
+      mouseDragged(mouseEvent.getX(), mouseEvent.getY());
+      break;
+    }
+  }
+
+  private void mousePressed(int x, int y) {
     this.pressedLayer = null;
     for (int i = this.layers.size() - 1; i >= 0; --i) {
       UILayer layer = this.layers.get(i);
@@ -410,14 +353,14 @@ public class UI {
     }
   }
 
-  public final void mouseReleased(int x, int y) {
+  private void mouseReleased(int x, int y) {
     if (this.pressedLayer != null) {
       this.pressedLayer.mouseReleased(x, y);
       this.pressedLayer = null;
     }
   }
 
-  public final void mouseClicked(int x, int y) {
+  public void mouseClicked(int x, int y) {
     for (int i = this.layers.size() - 1; i >= 0; --i) {
       UILayer layer = this.layers.get(i);
       if (layer.mouseClicked(x, y)) {
@@ -426,13 +369,13 @@ public class UI {
     }
   }
 
-  public final void mouseDragged(int x, int y) {
+  private void mouseDragged(int x, int y) {
     if (this.pressedLayer != null) {
       this.pressedLayer.mouseDragged(x, y);
     }
   }
 
-  public final void mouseWheel(int x, int y, int rotation) {
+  private void mouseWheel(int x, int y, int rotation) {
     for (int i = this.layers.size() - 1; i >= 0; --i) {
       UILayer layer = this.layers.get(i);
       if (layer.mouseWheel(x, y, rotation)) {
@@ -441,7 +384,33 @@ public class UI {
     }
   }
 
-  public final void keyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
+  public void keyEvent(KeyEvent keyEvent) {
+    if (isThreaded()) {
+      this.eventThreadInputEventQueue.add(keyEvent);
+    } else {
+      _keyEvent(keyEvent);
+    }
+  }
+
+  private void _keyEvent(KeyEvent keyEvent) {
+    char keyChar = keyEvent.getKey();
+    int keyCode = keyEvent.getKeyCode();
+    switch (keyEvent.getAction()) {
+    case KeyEvent.RELEASE:
+      keyReleased(keyEvent, keyChar, keyCode);
+      break;
+    case KeyEvent.PRESS:
+      keyPressed(keyEvent, keyChar, keyCode);
+      break;
+    case KeyEvent.TYPE:
+      keyTyped(keyEvent, keyChar, keyCode);
+      break;
+    default:
+      throw new RuntimeException("Invalid keyEvent type: " + keyEvent.getAction());
+    }
+  }
+
+  private void keyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
     if (keyCode == java.awt.event.KeyEvent.VK_TAB) {
       if (keyEvent.isShiftDown()) {
         focusPrevious();
@@ -454,13 +423,13 @@ public class UI {
     }
   }
 
-  public final void keyReleased(KeyEvent keyEvent, char keyChar, int keyCode) {
+  private void keyReleased(KeyEvent keyEvent, char keyChar, int keyCode) {
     if (this.focusedLayer != null) {
       this.focusedLayer.keyReleased(keyEvent, keyChar, keyCode);
     }
   }
 
-  public final void keyTyped(KeyEvent keyEvent, char keyChar, int keyCode) {
+  private void keyTyped(KeyEvent keyEvent, char keyChar, int keyCode) {
     if (this.focusedLayer != null) {
       this.focusedLayer.keyTyped(keyEvent, keyChar, keyCode);
     }

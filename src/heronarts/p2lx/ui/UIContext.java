@@ -82,12 +82,11 @@ public class UIContext extends UIContainer implements UILayer {
     this.pg.setSize((int) this.width, (int) this.height);
   }
 
-  protected PGraphics getGraphics() {
-    return this.pg;
-  }
-
   public final void draw() {
-    draw(this.ui, this.ui.applet.g);
+    PGraphics ag = this.ui.applet.g;
+    ag.translate(this.x, this.y);
+    draw(this.ui, ag);
+    ag.translate(-this.x, -this.y);
   }
 
   @Override
@@ -100,12 +99,14 @@ public class UIContext extends UIContainer implements UILayer {
       super.draw(ui, this.pg);
       this.pg.endDraw();
     }
-    pg.image(this.pg, this.x, this.y);
+    pg.image(this.pg, 0, 0);
   }
 
   @Override
   void _focus(UIObject focus) {
-    this.ui.willFocus(this, focus);
+    if (this.parent == null) {
+      this.ui.willFocus(this, focus);
+    }
     if (!this.hasFocus()) {
       super._focus(focus);
     }
@@ -115,7 +116,9 @@ public class UIContext extends UIContainer implements UILayer {
   void _blur() {
     if (this.hasFocus()) {
       super._blur();
-      this.ui.didBlur(this);
+      if (this.parent == null) {
+        this.ui.didBlur(this);
+      }
     }
   }
 

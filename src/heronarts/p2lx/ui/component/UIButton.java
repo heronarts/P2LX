@@ -39,11 +39,8 @@ public class UIButton extends UITextObject implements UIFocus {
   protected boolean active = false;
   protected boolean isMomentary = false;
 
-  protected int inactiveColor = 0xff222222;
-  protected int activeColor = UI.get().getHighlightColor();
-
-  protected final int DEFAULT_BORDER_COLOR = 0xff666666;
-  protected final int DEFAULT_FONT_COLOR = 0xff999999;
+  protected int inactiveColor = UI.get().theme.getControlBackgroundColor();
+  protected int activeColor = UI.get().theme.getPrimaryColor();
 
   private String activeLabel = "";
   private String inactiveLabel = "";
@@ -62,8 +59,8 @@ public class UIButton extends UITextObject implements UIFocus {
 
   public UIButton(float x, float y, float w, float h) {
     super(x, y, w, h);
-    setBorderColor(DEFAULT_BORDER_COLOR);
-    setFontColor(DEFAULT_FONT_COLOR);
+    setBorderColor(UI.get().theme.getControlBorderColor());
+    setFontColor(UI.get().theme.getControlTextColor());
     setBackgroundColor(this.inactiveColor);
   }
 
@@ -93,7 +90,7 @@ public class UIButton extends UITextObject implements UIFocus {
     String label = this.active ? this.activeLabel : this.inactiveLabel;
     if ((label != null) && (label.length() > 0)) {
       pg.fill(this.active ? 0xffffffff : getFontColor());
-      pg.textFont(hasFont() ? getFont() : ui.getItemFont());
+      pg.textFont(hasFont() ? getFont() : ui.theme.getControlFont());
       pg.textAlign(PConstants.CENTER);
       pg.text(label, this.width / 2, this.height - 5);
     }

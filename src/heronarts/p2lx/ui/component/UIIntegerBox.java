@@ -57,8 +57,8 @@ public class UIIntegerBox extends UITextObject implements UIFocus {
 
   public UIIntegerBox(float x, float y, float w, float h) {
     super(x, y, w, h);
-    setBorderColor(0xff666666);
-    setBackgroundColor(0xff222222);
+    setBorderColor(UI.get().theme.getControlBorderColor());
+    setBackgroundColor(UI.get().theme.getControlBackgroundColor());
   }
 
   public UIIntegerBox setParameter(final DiscreteParameter parameter) {
@@ -104,9 +104,9 @@ public class UIIntegerBox extends UITextObject implements UIFocus {
 
   @Override
   protected void onDraw(UI ui, PGraphics pg) {
+    pg.textFont(hasFont() ? getFont() : ui.theme.getControlFont());
     pg.textAlign(PConstants.CENTER, PConstants.CENTER);
-    pg.textFont(hasFont() ? getFont() : ui.getItemFont());
-    pg.fill(this.editing ? ui.getHighlightColor() : ui.getTextColor());
+    pg.fill(this.editing ? ui.theme.getPrimaryColor() : ui.theme.getControlTextColor());
     pg.text(this.editing ? this.editBuffer : ("" + this.value), this.width / 2, this.height / 2);
   }
 

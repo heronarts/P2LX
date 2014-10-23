@@ -35,7 +35,6 @@ import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PGraphics;
 import processing.event.KeyEvent;
-import processing.event.MouseEvent;
 
 /**
  * Harness to run LX inside a Processing 2 sketch
@@ -96,7 +95,6 @@ public class P2LX extends LX {
   public class Timer {
     public long drawNanos = 0;
     public long engineNanos = 0;
-    public long uiNanos = 0;
   }
 
   public final Timer timer = new Timer();
@@ -124,14 +122,13 @@ public class P2LX extends LX {
     this.desaturation = new DesaturationEffect(this);
     this.flash = new FlashEffect(this);
 
-    this.ui = new UI(applet);
+    this.ui = new UI(this);
 
     applet.colorMode(PConstants.HSB, 360, 100, 100, 100);
 
     applet.registerMethod("draw", this);
     applet.registerMethod("dispose", this);
     applet.registerMethod("keyEvent", this);
-    applet.registerMethod("mouseEvent", this);
   }
 
   /**
@@ -206,10 +203,6 @@ public class P2LX extends LX {
     }
     this.timer.engineNanos = System.nanoTime() - engineStart;
 
-    long uiStart = System.nanoTime();
-    this.ui.draw();
-    this.timer.uiNanos = System.nanoTime() - uiStart;
-
     if (this.flags.showFramerate) {
       if (this.engine.isThreaded()) {
         PApplet.println("Engine: " + this.engine.frameRate() + " "
@@ -227,8 +220,6 @@ public class P2LX extends LX {
     int keyCode = keyEvent.getKeyCode();
     int action = keyEvent.getAction();
     if (action == KeyEvent.RELEASE) {
-      this.ui.keyReleased(keyEvent, keyChar, keyCode);
-
       switch (Character.toLowerCase(keyChar)) {
       case '[':
         this.engine.goPrev();
@@ -252,7 +243,6 @@ public class P2LX extends LX {
         break;
       }
     } else if (action == KeyEvent.PRESS) {
-      this.ui.keyPressed(keyEvent, keyChar, keyCode);
       switch (keyCode) {
       case java.awt.event.KeyEvent.VK_UP:
         if (keyEvent.isMetaDown()) {
@@ -286,28 +276,6 @@ public class P2LX extends LX {
         this.flash.enable();
         break;
       }
-    } else if (action == KeyEvent.TYPE) {
-      this.ui.keyTyped(keyEvent, keyChar, keyCode);
-    }
-  }
-
-  public void mouseEvent(MouseEvent e) {
-    switch (e.getAction()) {
-    case MouseEvent.WHEEL:
-      this.ui.mouseWheel(e.getX(), e.getY(), e.getCount());
-      return;
-    case MouseEvent.PRESS:
-      this.ui.mousePressed(e.getX(), e.getY());
-      break;
-    case processing.event.MouseEvent.RELEASE:
-      this.ui.mouseReleased(e.getX(), e.getY());
-      break;
-    case processing.event.MouseEvent.CLICK:
-      this.ui.mouseClicked(e.getX(), e.getY());
-      break;
-    case processing.event.MouseEvent.DRAG:
-      this.ui.mouseDragged(e.getX(), e.getY());
-      break;
     }
   }
 

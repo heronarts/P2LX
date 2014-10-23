@@ -65,7 +65,7 @@ public class UIKnob extends UIParameterControl implements UIFocus {
     pg.ellipseMode(PConstants.CENTER);
 
     pg.noStroke();
-    pg.fill(ui.getBackgroundColor());
+    pg.fill(ui.theme.getWindowBackgroundColor());
     pg.rect(0, 0, this.knobSize, this.knobSize);
 
     // Full outer dark ring
@@ -73,13 +73,13 @@ public class UIKnob extends UIParameterControl implements UIFocus {
     float arcStart = PConstants.HALF_PI + this.knobIndent;
     float arcRange = (PConstants.TWO_PI - 2 * this.knobIndent);
 
-    pg.fill(0xff222222);
-    pg.stroke(ui.getBackgroundColor());
+    pg.fill(ui.theme.getControlBackgroundColor());
+    pg.stroke(ui.theme.getWindowBackgroundColor());
     pg.arc(arcCenter, arcCenter, this.knobSize, this.knobSize, arcStart,
         arcStart + arcRange);
 
     // Light ring indicating value
-    pg.fill(ui.getHighlightColor());
+    pg.fill(isEnabled() ? ui.theme.getPrimaryColor() : ui.theme.getControlDisabledColor());
     pg.arc(arcCenter, arcCenter, this.knobSize, this.knobSize, arcStart,
         arcStart + knobValue * arcRange);
 
@@ -101,11 +101,11 @@ public class UIKnob extends UIParameterControl implements UIFocus {
       knobLabel = knobLabel.substring(0, 4);
     }
     pg.noStroke();
-    pg.fill(ui.BLACK);
+    pg.fill(ui.theme.getControlBackgroundColor());
     pg.rect(0, this.knobSize + 2, this.knobSize, this.knobLabelHeight - 2);
-    pg.fill(ui.getTextColor());
+    pg.fill(ui.theme.getControlTextColor());
     pg.textAlign(PConstants.CENTER);
-    pg.textFont(ui.getTitleFont());
+    pg.textFont(ui.theme.getLabelFont());
     pg.text(knobLabel, arcCenter, this.knobSize + this.knobLabelHeight - 2);
   }
 
@@ -137,6 +137,9 @@ public class UIKnob extends UIParameterControl implements UIFocus {
 
   @Override
   public void onMouseDragged(float mx, float my, float dx, float dy) {
+    if (!isEnabled()) {
+      return;
+    }
     this.dragValue = LXUtils.constrain(this.dragValue - dy / 100., 0, 1);
     setNormalized(this.dragValue);
   }

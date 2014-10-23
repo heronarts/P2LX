@@ -188,6 +188,8 @@ public class UICameraLayer implements UILayer, UIFocus {
   }
 
   private void computeEye() {
+    float maxPhi = PConstants.HALF_PI * .9f;
+    this.phi = LXUtils.constrainf(this.phi, -maxPhi, maxPhi);
     float sintheta = (float) Math.sin(this.theta);
     float costheta = (float) Math.cos(this.theta);
     float sinphi = (float) Math.sin(this.phi);
@@ -270,9 +272,6 @@ public class UICameraLayer implements UILayer, UIFocus {
     this.theta -= dx * .003;
     this.phi += dy * .003;
 
-    this.phi = LXUtils.constrainf(this.phi, -PConstants.QUARTER_PI,
-        PConstants.QUARTER_PI);
-
     computeEye();
 
     return true;
@@ -286,14 +285,23 @@ public class UICameraLayer implements UILayer, UIFocus {
   public final boolean keyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
     float amount = keyEvent.isShiftDown() ? .2f : .02f;
     if (keyCode == java.awt.event.KeyEvent.VK_LEFT) {
-      this.theta -= amount;
-      computeEye();
-      return true;
-    } else if (keyCode == java.awt.event.KeyEvent.VK_RIGHT) {
       this.theta += amount;
       computeEye();
       return true;
+    } else if (keyCode == java.awt.event.KeyEvent.VK_RIGHT) {
+      this.theta -= amount;
+      computeEye();
+      return true;
+    } else if (keyCode == java.awt.event.KeyEvent.VK_UP) {
+      this.phi -= amount;
+      computeEye();
+      return true;
+    } else if (keyCode == java.awt.event.KeyEvent.VK_DOWN) {
+      this.phi += amount;
+      computeEye();
+      return true;
     }
+
     return false;
   }
 

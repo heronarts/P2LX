@@ -41,6 +41,8 @@ public abstract class UIObject {
 
   protected final static int DOUBLE_CLICK_THRESHOLD = 300;
 
+  private UI ui = null;
+
   /**
    * Children of this object, latest elements are drawn on top.
    */
@@ -161,7 +163,11 @@ public abstract class UIObject {
   public UIObject setVisible(boolean visible) {
     if (visible != this.visible) {
       this.visible = visible;
-      redraw();
+      if (visible) {
+        redraw();
+      } else if (this.parent != null) {
+        this.parent.redraw();
+      }
     }
     return this;
   }
@@ -177,7 +183,11 @@ public abstract class UIObject {
     if ((this.x != x) || (this.y != y)) {
       this.x = x;
       this.y = y;
-      redraw();
+      if (this.parent != null) {
+        this.parent.redraw();
+      } else {
+        redraw();
+      }
     }
     return this;
   }
@@ -194,7 +204,11 @@ public abstract class UIObject {
       this.width = width;
       this.height = height;
       onResize();
-      redraw();
+      if (this.parent != null) {
+        this.parent.redraw();
+      } else {
+        redraw();
+      }
     }
     return this;
   }
@@ -249,6 +263,24 @@ public abstract class UIObject {
   }
 
   /**
+   * Sets the UI that this object belongs to, recursively
+   * applies to all children.
+   */
+  void setUI(UI ui) {
+    if (this.ui != ui) {
+      this.ui = ui;
+      redraw();
+      for (UIObject child : this.children) {
+        child.setUI(ui);
+      }
+    }
+  }
+
+  UI getUI() {
+    return this.ui;
+  }
+
+  /**
    * Places this object inside a container.
    *
    * @param container The object in which to place this
@@ -260,6 +292,8 @@ public abstract class UIObject {
     }
     container.children.add(this);
     this.parent = container;
+    setUI(((UIObject)this.parent).ui);
+    container.redraw();
     return this;
   }
 
@@ -401,8 +435,15 @@ public abstract class UIObject {
    * @return this object
    */
   public final UIObject redraw() {
+    if (this.ui != null) {
+      this.ui.redraw(this);
+    }
+    return this;
+  }
+
+  final void _redraw() {
     // Mark object and children as needing redraw
-    _redraw();
+    _markRedraw();
 
     // Mark parent containers as needing a child redrawn
     UIObject p = this.parent;
@@ -410,18 +451,17 @@ public abstract class UIObject {
       p.childNeedsRedraw = true;
       p = p.parent;
     }
-    return this;
   }
 
   /**
    * Internal helper. Marks this object and all of its children as needing to be
    * redrawn.
    */
-  private final void _redraw() {
+  private final void _markRedraw() {
     this.needsRedraw = true;
+    this.childNeedsRedraw = (this.children.size() > 0);
     for (UIObject child : this.children) {
-      this.childNeedsRedraw = true;
-      child._redraw();
+      child._markRedraw();
     }
   }
 
@@ -490,7 +530,7 @@ public abstract class UIObject {
    */
   protected void drawFocus(UI ui, PGraphics pg) {
     int focusSize = (int) Math.min(8, Math.min(this.width, this.height) / 8);
-    pg.stroke(ui.getFocusColor());
+    pg.stroke(ui.theme.getFocusColor());
     pg.noFill();
     // Top left
     pg.line(0, 0, focusSize, 0);

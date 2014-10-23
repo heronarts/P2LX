@@ -54,41 +54,49 @@ public class UIWindow extends UIContext {
    */
   public UIWindow(final UI ui, String title, float x, float y, float w, float h) {
     super(ui, x, y, w, h);
-    setBackgroundColor(ui.getBackgroundColor());
-    setBorderColor(ui.getWindowBorderColor());
-    this.label = new UILabel(0, 0, w, TITLE_LABEL_HEIGHT)
+    setBackgroundColor(ui.theme.getWindowBackgroundColor());
+    setBorderColor(ui.theme.getWindowBorderColor());
+    this.label = new UILabel(0, 0, w, TITLE_LABEL_HEIGHT);
+    this.label
       .setLabel(title)
       .setPadding(TITLE_PADDING)
-      .setColor(ui.getTextColor());
-    this.label.setFont(ui.getTitleFont()).addToContainer(this);
+      .setFontColor(ui.theme.getWindowTitleColor())
+      .setFont(ui.theme.getWindowTitleFont())
+      .addToContainer(this);
   }
 
   private boolean movingWindow = false;
 
   @Override
   protected void onFocus() {
-    this.label.setColor(ui.getFocusColor());
+    this.label.setFontColor(ui.theme.getFocusColor());
   }
 
   @Override
   protected void onBlur() {
-    this.label.setColor(ui.getTextColor());
+    this.label.setFontColor(ui.theme.getWindowTitleColor());
   }
 
   @Override
   protected void onMousePressed(float mx, float my) {
     this.movingWindow = (my < TITLE_LABEL_HEIGHT);
-    this.ui.bringToTop(this);
+    if (this.parent == null) {
+      this.ui.bringToTop(this);
+    }
     _focus(this);
   }
 
   @Override
   protected void onMouseDragged(float mx, float my, float dx, float dy) {
     if (this.movingWindow) {
-      float newX = LXUtils.constrainf(this.x + dx, 0, this.ui.applet.width
-          - this.width);
-      float newY = LXUtils.constrainf(this.y + dy, 0, this.ui.applet.height
-          - this.height);
+      float maxW = this.ui.applet.width;
+      float maxH = this.ui.applet.height;
+      if (this.parent != null) {
+        maxW = this.parent.width;
+        maxH = this.parent.height;
+      }
+      float newX = LXUtils.constrainf(this.x + dx, 0, maxW - this.width);
+      float newY = LXUtils.constrainf(this.y + dy, 0, maxH - this.height);
       setPosition(newX, newY);
     }
   }

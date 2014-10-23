@@ -78,7 +78,7 @@ public class UIBeatDetect extends UIWindow {
   public void onDraw(UI ui, PGraphics pg) {
     super.onDraw(ui, pg);
 
-    int highlight = ui.getHighlightColor();
+    int highlight = ui.theme.getPrimaryColor();
 
     pg.stroke(0xff999999);
     pg.fill(0xff000000);
@@ -105,7 +105,7 @@ public class UIBeatDetect extends UIWindow {
       if (i >= this.gate.minBand.getValuei() && (i < (this.gate.minBand.getValuei() + this.gate.avgBands.getValuei()))) {
         pg.fill(highlight);
       } else {
-        pg.fill(ui.getSelectionColor());
+        pg.fill(ui.theme.getSecondaryColor());
       }
       pg.rect(this.eqX + 2 + this.piece*i, this.eqBottom, this.piece-1, -(this.eqHeight-1)*this.gate.eq.getBandf(i));
     }
