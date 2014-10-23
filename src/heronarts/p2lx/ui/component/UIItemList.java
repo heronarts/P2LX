@@ -31,7 +31,7 @@ import heronarts.lx.parameter.LXParameter;
 import heronarts.lx.parameter.LXParameterListener;
 import heronarts.p2lx.ui.UI;
 import heronarts.p2lx.ui.UIFocus;
-import heronarts.p2lx.ui.UIObject;
+import heronarts.p2lx.ui.UITextObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +43,7 @@ import processing.event.KeyEvent;
 /**
  * UI for a list of state items
  */
-public class UIItemList extends UIObject implements UIFocus {
+public class UIItemList extends UITextObject implements UIFocus {
 
   public static interface Item {
 
@@ -159,7 +159,7 @@ public class UIItemList extends UIObject implements UIFocus {
       pg.fill(itemColor);
       pg.rect(0, yp, this.width, this.itemHeight);
       pg.fill(labelColor);
-      pg.textFont(ui.getItemFont());
+      pg.textFont(hasFont() ? getFont() : ui.getItemFont());
       pg.textAlign(PConstants.LEFT, PConstants.TOP);
       pg.text(item.getLabel(), 6, yp + 4);
 

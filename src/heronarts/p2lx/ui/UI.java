@@ -83,6 +83,11 @@ public class UI {
   private int backgroundColor = 0xff444444;
 
   /**
+   * Default border color
+   */
+  private int windowBorderColor = 0xff292929;
+
+  /**
    * Default focus color
    */
   private int focusColor = 0xff669966;
@@ -302,6 +307,26 @@ public class UI {
    */
   public UI setBackgroundColor(int color) {
     this.backgroundColor = color;
+    return this;
+  }
+
+  /**
+   * Gets border color
+   *
+   * @return bordercolor
+   */
+  public int getWindowBorderColor() {
+    return this.windowBorderColor;
+  }
+
+  /**
+   * Sets default border color
+   *
+   * @param color color
+   * @return this UI
+   */
+  public UI setWindowBorderColor(int color) {
+    this.windowBorderColor = color;
     return this;
   }
 

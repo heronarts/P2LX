@@ -55,11 +55,12 @@ public class UIWindow extends UIContext {
   public UIWindow(final UI ui, String title, float x, float y, float w, float h) {
     super(ui, x, y, w, h);
     setBackgroundColor(ui.getBackgroundColor());
-    setBorderColor(0xff292929);
-    this.label = new UILabel(0, 0, w, TITLE_LABEL_HEIGHT).setLabel(title)
-        .setPadding(TITLE_PADDING).setColor(ui.getTextColor())
-        .setFont(ui.getTitleFont());
-    this.label.addToContainer(this);
+    setBorderColor(ui.getWindowBorderColor());
+    this.label = new UILabel(0, 0, w, TITLE_LABEL_HEIGHT)
+      .setLabel(title)
+      .setPadding(TITLE_PADDING)
+      .setColor(ui.getTextColor());
+    this.label.setFont(ui.getTitleFont()).addToContainer(this);
   }
 
   private boolean movingWindow = false;

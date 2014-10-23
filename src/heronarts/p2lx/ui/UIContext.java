@@ -82,6 +82,10 @@ public class UIContext extends UIContainer implements UILayer {
     this.pg.setSize((int) this.width, (int) this.height);
   }
 
+  protected PGraphics getGraphics() {
+    return this.pg;
+  }
+
   public final void draw() {
     draw(this.ui, this.ui.applet.g);
   }

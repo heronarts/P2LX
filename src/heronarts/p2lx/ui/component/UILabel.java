@@ -25,7 +25,7 @@
 package heronarts.p2lx.ui.component;
 
 import heronarts.p2lx.ui.UI;
-import heronarts.p2lx.ui.UIObject;
+import heronarts.p2lx.ui.UITextObject;
 import processing.core.PConstants;
 import processing.core.PFont;
 import processing.core.PGraphics;
@@ -34,12 +34,7 @@ import processing.core.PGraphics;
  * A simple text label object. Draws a string aligned top-left to its x-y
  * position.
  */
-public class UILabel extends UIObject {
-
-  /**
-   * Label font
-   */
-  private PFont font;
+public class UILabel extends UITextObject {
 
   private int horizontalAlignment = PConstants.LEFT;
 
@@ -88,8 +83,10 @@ public class UILabel extends UIObject {
     return this;
   }
 
+  @Override
   protected void onDraw(UI ui, PGraphics pg) {
-    pg.textFont((this.font == null) ? ui.getTitleFont() : this.font);
+    PFont font = getFont();
+    pg.textFont((font == null) ? ui.getTitleFont() : font);
     pg.fill(this.color);
     float tx = this.padding, ty = this.padding;
     switch (this.horizontalAlignment) {
@@ -113,14 +110,6 @@ public class UILabel extends UIObject {
     }
     pg.textAlign(this.horizontalAlignment, this.verticalAlignment);
     pg.text(this.label, tx, ty);
-  }
-
-  public UILabel setFont(PFont font) {
-    if (this.font != font) {
-      this.font = font;
-      redraw();
-    }
-    return this;
   }
 
   public UILabel setColor(int color) {

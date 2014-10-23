@@ -30,12 +30,12 @@ import heronarts.lx.parameter.LXParameter;
 import heronarts.lx.parameter.LXParameterListener;
 import heronarts.p2lx.ui.UI;
 import heronarts.p2lx.ui.UIFocus;
-import heronarts.p2lx.ui.UIObject;
+import heronarts.p2lx.ui.UITextObject;
 import processing.core.PConstants;
 import processing.core.PGraphics;
 import processing.event.KeyEvent;
 
-public class UIIntegerBox extends UIObject implements UIFocus {
+public class UIIntegerBox extends UITextObject implements UIFocus {
 
   private int minValue = 0;
   private int maxValue = PConstants.MAX_INT;
@@ -105,7 +105,7 @@ public class UIIntegerBox extends UIObject implements UIFocus {
   @Override
   protected void onDraw(UI ui, PGraphics pg) {
     pg.textAlign(PConstants.CENTER, PConstants.CENTER);
-    pg.textFont(ui.getItemFont());
+    pg.textFont(hasFont() ? getFont() : ui.getItemFont());
     pg.fill(this.editing ? ui.getHighlightColor() : ui.getTextColor());
     pg.text(this.editing ? this.editBuffer : ("" + this.value), this.width / 2, this.height / 2);
   }

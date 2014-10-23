@@ -63,8 +63,7 @@ public abstract class UIParameterControl extends UIObject implements
     return this.parameter;
   }
 
-  public UIParameterControl setParameter(
-      LXListenableNormalizedParameter parameter) {
+  public UIParameterControl setParameter(LXListenableNormalizedParameter parameter) {
     if (this.parameter != null) {
       this.parameter.removeListener(this);
     }
@@ -89,7 +88,7 @@ public abstract class UIParameterControl extends UIObject implements
         dp.setValue(dp.getValuei() + times);
       }
     } else {
-      float amount = keyEvent.isShiftDown() ? .05f : .01f;
+      double amount = keyEvent.isShiftDown() ? .05f : .01f;
       if ((keyCode == java.awt.event.KeyEvent.VK_LEFT)
           || (keyCode == java.awt.event.KeyEvent.VK_DOWN)) {
         setNormalized(LXUtils.constrain(getNormalized() - amount, 0, 1));

@@ -29,19 +29,21 @@ import heronarts.lx.parameter.LXParameter;
 import heronarts.lx.parameter.LXParameterListener;
 import heronarts.p2lx.ui.UI;
 import heronarts.p2lx.ui.UIFocus;
-import heronarts.p2lx.ui.UIObject;
+import heronarts.p2lx.ui.UITextObject;
 import processing.core.PConstants;
 import processing.core.PGraphics;
 import processing.event.KeyEvent;
 
-public class UIButton extends UIObject implements UIFocus {
+public class UIButton extends UITextObject implements UIFocus {
 
   protected boolean active = false;
   protected boolean isMomentary = false;
 
   protected int inactiveColor = 0xff222222;
   protected int activeColor = UI.get().getHighlightColor();
-  protected int labelColor = 0xff999999;
+
+  protected final int DEFAULT_BORDER_COLOR = 0xff666666;
+  protected final int DEFAULT_FONT_COLOR = 0xff999999;
 
   private String activeLabel = "";
   private String inactiveLabel = "";
@@ -60,7 +62,8 @@ public class UIButton extends UIObject implements UIFocus {
 
   public UIButton(float x, float y, float w, float h) {
     super(x, y, w, h);
-    setBorderColor(0xff666666);
+    setBorderColor(DEFAULT_BORDER_COLOR);
+    setFontColor(DEFAULT_FONT_COLOR);
     setBackgroundColor(this.inactiveColor);
   }
 
@@ -89,8 +92,8 @@ public class UIButton extends UIObject implements UIFocus {
   protected void onDraw(UI ui, PGraphics pg) {
     String label = this.active ? this.activeLabel : this.inactiveLabel;
     if ((label != null) && (label.length() > 0)) {
-      pg.fill(this.active ? 0xffffffff : this.labelColor);
-      pg.textFont(ui.getItemFont());
+      pg.fill(this.active ? 0xffffffff : getFontColor());
+      pg.textFont(hasFont() ? getFont() : ui.getItemFont());
       pg.textAlign(PConstants.CENTER);
       pg.text(label, this.width / 2, this.height - 5);
     }
@@ -163,14 +166,6 @@ public class UIButton extends UIObject implements UIFocus {
       if (!this.active) {
         setBackgroundColor(inactiveColor);
       }
-    }
-    return this;
-  }
-
-  public UIButton setLabelColor(int labelColor) {
-    if (this.labelColor != labelColor) {
-      this.labelColor = labelColor;
-      redraw();
     }
     return this;
   }

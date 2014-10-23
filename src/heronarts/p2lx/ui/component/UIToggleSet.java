@@ -30,12 +30,12 @@ import heronarts.lx.parameter.LXParameter;
 import heronarts.lx.parameter.LXParameterListener;
 import heronarts.p2lx.ui.UI;
 import heronarts.p2lx.ui.UIFocus;
-import heronarts.p2lx.ui.UIObject;
+import heronarts.p2lx.ui.UITextObject;
 import processing.core.PConstants;
 import processing.core.PGraphics;
 import processing.event.KeyEvent;
 
-public class UIToggleSet extends UIObject implements UIFocus,
+public class UIToggleSet extends UITextObject implements UIFocus,
     LXParameterListener {
 
   private String[] options = null;
@@ -174,7 +174,7 @@ public class UIToggleSet extends UIObject implements UIFocus,
 
     pg.noStroke();
     pg.textAlign(PConstants.CENTER, PConstants.CENTER);
-    pg.textFont(ui.getItemFont());
+    pg.textFont(hasFont() ? getFont() : ui.getItemFont());
     int leftBoundary = 0;
 
     for (int i = 0; i < this.options.length; ++i) {

@@ -30,6 +30,9 @@ import heronarts.p2lx.ui.UIFocus;
 import processing.core.PConstants;
 import processing.core.PGraphics;
 
+/**
+ * TODO(mcslee): make the label a UILabel subcomponent and optional
+ */
 public class UIKnob extends UIParameterControl implements UIFocus {
 
   public final static int DEFAULT_SIZE = 28;
@@ -71,7 +74,7 @@ public class UIKnob extends UIParameterControl implements UIFocus {
     float arcRange = (PConstants.TWO_PI - 2 * this.knobIndent);
 
     pg.fill(0xff222222);
-    pg.stroke(0xff494949);
+    pg.stroke(ui.getBackgroundColor());
     pg.arc(arcCenter, arcCenter, this.knobSize, this.knobSize, arcStart,
         arcStart + arcRange);
 

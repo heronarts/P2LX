@@ -28,7 +28,9 @@ import heronarts.p2lx.ui.UI;
 import heronarts.lx.LX;
 import heronarts.lx.effect.DesaturationEffect;
 import heronarts.lx.effect.FlashEffect;
+import heronarts.lx.model.GridModel;
 import heronarts.lx.model.LXModel;
+import heronarts.lx.model.StripModel;
 import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PGraphics;
@@ -98,6 +100,18 @@ public class P2LX extends LX {
   }
 
   public final Timer timer = new Timer();
+
+  public P2LX(PApplet applet) {
+    this(applet, new LXModel());
+  }
+
+  public P2LX(PApplet applet, int length) {
+    this(applet, new StripModel(length));
+  }
+
+  public P2LX(PApplet applet, int width, int height) {
+    this(applet, new GridModel(width, height));
+  }
 
   public P2LX(PApplet applet, LXModel model) {
     super(model);
