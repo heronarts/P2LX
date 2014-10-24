@@ -30,12 +30,13 @@ import heronarts.lx.parameter.LXParameter;
 import heronarts.lx.parameter.LXParameterListener;
 import heronarts.p2lx.ui.UI;
 import heronarts.p2lx.ui.UIFocus;
-import heronarts.p2lx.ui.UITextObject;
+import heronarts.p2lx.ui.UI2dTextComponent;
 import processing.core.PConstants;
 import processing.core.PGraphics;
 import processing.event.KeyEvent;
+import processing.event.MouseEvent;
 
-public class UIIntegerBox extends UITextObject implements UIFocus {
+public class UIIntegerBox extends UI2dTextComponent implements UIFocus {
 
   private int minValue = 0;
   private int maxValue = PConstants.MAX_INT;
@@ -125,12 +126,12 @@ public class UIIntegerBox extends UITextObject implements UIFocus {
   }
 
   @Override
-  protected void onMousePressed(float mx, float my) {
+  protected void onMousePressed(MouseEvent mouseEvent, float mx, float my) {
     this.dAccum = 0;
   }
 
   @Override
-  protected void onMouseDragged(float mx, float my, float dx, float dy) {
+  protected void onMouseDragged(MouseEvent mouseEvent, float mx, float my, float dx, float dy) {
     this.dAccum -= dy;
     int offset = (int) (this.dAccum / 5);
     this.dAccum = this.dAccum - (offset * 5);
@@ -138,7 +139,7 @@ public class UIIntegerBox extends UITextObject implements UIFocus {
   }
 
   @Override
-  public void onKeyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
+  protected void onKeyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
     if (keyChar >= '0' && keyChar <= '9') {
       if (!this.editing) {
         this.editing = true;

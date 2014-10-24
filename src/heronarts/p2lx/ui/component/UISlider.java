@@ -28,6 +28,7 @@ import heronarts.lx.LXUtils;
 import heronarts.p2lx.ui.UI;
 import heronarts.p2lx.ui.UIFocus;
 import processing.core.PGraphics;
+import processing.event.MouseEvent;
 
 public class UISlider extends UIParameterControl implements UIFocus {
 
@@ -82,13 +83,11 @@ public class UISlider extends UIParameterControl implements UIFocus {
   }
 
   private boolean editing = false;
-  private long lastClick = 0;
   private float doubleClickMode = 0;
   private float doubleClickP = 0;
 
   @Override
-  protected void onMousePressed(float mx, float my) {
-    long now = System.currentTimeMillis();
+  protected void onMousePressed(MouseEvent mouseEvent, float mx, float my) {
     float mp, dim;
     double handleEdge;
     boolean isVertical = false;
@@ -109,8 +108,7 @@ public class UISlider extends UIParameterControl implements UIFocus {
     if ((mp >= handleEdge) && (mp < handleEdge + HANDLE_WIDTH)) {
       this.editing = true;
     } else {
-      if ((now - this.lastClick) < DOUBLE_CLICK_THRESHOLD
-          && Math.abs(mp - this.doubleClickP) < 3) {
+      if ((mouseEvent.getCount() > 1) && Math.abs(mp - this.doubleClickP) < 3) {
         setNormalized(this.doubleClickMode);
       }
       this.doubleClickP = mp;
@@ -122,16 +120,15 @@ public class UISlider extends UIParameterControl implements UIFocus {
         this.doubleClickMode = 0.5f;
       }
     }
-    this.lastClick = now;
   }
 
   @Override
-  protected void onMouseReleased(float mx, float my) {
+  protected void onMouseReleased(MouseEvent mouseEvent, float mx, float my) {
     this.editing = false;
   }
 
   @Override
-  protected void onMouseDragged(float mx, float my, float dx, float dy) {
+  protected void onMouseDragged(MouseEvent mouseEvent, float mx, float my, float dx, float dy) {
     if (isEnabled() && this.editing) {
       float mp, dim;
       switch (this.direction) {

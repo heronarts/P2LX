@@ -26,6 +26,7 @@ package heronarts.p2lx.ui.control;
 
 import processing.core.PApplet;
 import processing.core.PGraphics;
+import processing.event.MouseEvent;
 import heronarts.lx.audio.FrequencyGate;
 import heronarts.lx.color.LXColor;
 import heronarts.p2lx.ui.UI;
@@ -130,8 +131,8 @@ public class UIBeatDetect extends UIWindow {
   private float bandDelta = 0;
 
   @Override
-  public void onMousePressed(float mx, float my) {
-    super.onMousePressed(mx, my);
+  protected void onMousePressed(MouseEvent mouseEvent, float mx, float my) {
+    super.onMousePressed(mouseEvent, mx, my);
     this.bandDragging = false;
     if ((mx >= this.bandX) && (mx < (this.bandX + this.bandWidth)) &&
         (my >= this.eqTop) && (my <= this.eqBottom)) {
@@ -142,8 +143,8 @@ public class UIBeatDetect extends UIWindow {
   }
 
   @Override
-  public void onMouseDragged(float mx, float my, float dx, float dy) {
-    super.onMouseDragged(mx, my, dx, dy);
+  protected void onMouseDragged(MouseEvent mouseEvent, float mx, float my, float dx, float dy) {
+    super.onMouseDragged(mouseEvent, mx, my, dx, dy);
     if (this.bandDragging) {
       if (mx >= this.eqX && mx <= (this.eqX + this.eqWidth)) {
         this.bandDelta += dx;

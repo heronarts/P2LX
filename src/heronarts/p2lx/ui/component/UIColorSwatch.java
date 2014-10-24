@@ -26,16 +26,17 @@ package heronarts.p2lx.ui.component;
 
 import processing.core.PGraphics;
 import processing.event.KeyEvent;
+import processing.event.MouseEvent;
 import heronarts.lx.LXUtils;
 import heronarts.lx.color.ColorParameter;
 import heronarts.lx.color.LXColor;
 import heronarts.lx.parameter.LXParameter;
 import heronarts.lx.parameter.LXParameterListener;
 import heronarts.p2lx.ui.UI;
+import heronarts.p2lx.ui.UI2dComponent;
 import heronarts.p2lx.ui.UIFocus;
-import heronarts.p2lx.ui.UIObject;
 
-public class UIColorSwatch extends UIObject implements UIFocus {
+public class UIColorSwatch extends UI2dComponent implements UIFocus {
 
   public final ColorParameter color;
 
@@ -78,12 +79,12 @@ public class UIColorSwatch extends UIObject implements UIFocus {
   }
 
   @Override
-  protected void onMousePressed(float mx, float my) {
+  protected void onMousePressed(MouseEvent mouseEvent, float mx, float my) {
     updateColor(mx, my);
   }
 
   @Override
-  protected void onMouseDragged(float mx, float my, float dx, float dy) {
+  protected void onMouseDragged(MouseEvent mouseEvent, float mx, float my, float dx, float dy) {
     updateColor(mx, my);
   }
 

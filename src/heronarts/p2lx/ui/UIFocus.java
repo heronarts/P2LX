@@ -25,8 +25,7 @@
 package heronarts.p2lx.ui;
 
 /**
- * This is a marker interface. UIObjects which can receive focus events should
- * implement this interface.
+ * Marker interface for objects which can receive focus via tab or click
  */
-public interface UIFocus {
+public interface UIFocus extends UITabFocus {
 }

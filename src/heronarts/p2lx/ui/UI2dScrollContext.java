@@ -24,20 +24,22 @@
 
 package heronarts.p2lx.ui;
 
+import processing.event.MouseEvent;
 import heronarts.lx.LXUtils;
 
-public class UIScrollContext extends UIContext {
+public class UI2dScrollContext extends UI2dContext {
 
   private float scrollWidth;
+
   private float scrollHeight;
 
-  public UIScrollContext(UI ui, float x, float y, float w, float h) {
+  public UI2dScrollContext(UI ui, float x, float y, float w, float h) {
     super(ui, x, y, w, h);
     this.scrollWidth = w;
     this.scrollHeight = h;
   }
 
-  public UIScrollContext setScrollSize(float scrollWidth, float scrollHeight) {
+  public UI2dScrollContext setScrollSize(float scrollWidth, float scrollHeight) {
     if ((this.scrollWidth != scrollWidth)
         || (this.scrollHeight != scrollHeight)) {
       this.scrollWidth = scrollWidth;
@@ -47,7 +49,7 @@ public class UIScrollContext extends UIContext {
     return this;
   }
 
-  public UIScrollContext setScrollHeight(float scrollHeight) {
+  public UI2dScrollContext setScrollHeight(float scrollHeight) {
     if (this.scrollHeight != scrollHeight) {
       this.scrollHeight = scrollHeight;
       rescroll();
@@ -55,7 +57,7 @@ public class UIScrollContext extends UIContext {
     return this;
   }
 
-  public UIScrollContext setScrollWidth(float scrollWidth) {
+  public UI2dScrollContext setScrollWidth(float scrollWidth) {
     if (this.scrollWidth != scrollWidth) {
       this.scrollWidth = scrollWidth;
       rescroll();
@@ -63,6 +65,7 @@ public class UIScrollContext extends UIContext {
     return this;
   }
 
+  @Override
   protected void onResize() {
     super.onResize();
     rescroll();
@@ -86,7 +89,8 @@ public class UIScrollContext extends UIContext {
     }
   }
 
-  protected void onMouseWheel(float mx, float my, float delta) {
+  @Override
+  protected void onMouseWheel(MouseEvent e, float mx, float my, float delta) {
     float newScrollY = LXUtils
         .constrainf(this.scrollY - delta, minScrollY(), 0);
     if (newScrollY != this.scrollY) {

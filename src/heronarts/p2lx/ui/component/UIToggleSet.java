@@ -30,13 +30,13 @@ import heronarts.lx.parameter.LXParameter;
 import heronarts.lx.parameter.LXParameterListener;
 import heronarts.p2lx.ui.UI;
 import heronarts.p2lx.ui.UIFocus;
-import heronarts.p2lx.ui.UITextObject;
+import heronarts.p2lx.ui.UI2dTextComponent;
 import processing.core.PConstants;
 import processing.core.PGraphics;
 import processing.event.KeyEvent;
+import processing.event.MouseEvent;
 
-public class UIToggleSet extends UITextObject implements UIFocus,
-    LXParameterListener {
+public class UIToggleSet extends UI2dTextComponent implements UIFocus, LXParameterListener {
 
   private String[] options = null;
 
@@ -199,7 +199,7 @@ public class UIToggleSet extends UITextObject implements UIFocus,
   }
 
   @Override
-  public void onMousePressed(float mx, float my) {
+  protected void onMousePressed(MouseEvent mouseEvent, float mx, float my) {
     for (int i = 0; i < this.boundaries.length; ++i) {
       if (mx < this.boundaries[i]) {
         setValue(i);
@@ -209,7 +209,7 @@ public class UIToggleSet extends UITextObject implements UIFocus,
   }
 
   @Override
-  public void onKeyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
+  protected void onKeyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
     if ((keyCode == java.awt.event.KeyEvent.VK_LEFT)
         || (keyCode == java.awt.event.KeyEvent.VK_DOWN)) {
       setValue(LXUtils.constrain(this.value - 1, 0, this.options.length - 1));

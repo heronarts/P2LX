@@ -29,7 +29,7 @@ import processing.core.PFont;
 /**
  * Objects that render text use this base class to handle the text font and color
  */
-public abstract class UITextObject extends UIObject {
+public abstract class UI2dTextComponent extends UI2dComponent {
 
   private PFont font = null;
 
@@ -37,7 +37,7 @@ public abstract class UITextObject extends UIObject {
 
   private int fontColor = 0xff000000;
 
-  protected UITextObject(float x, float y, float w, float h) {
+  protected UI2dTextComponent(float x, float y, float w, float h) {
     super(x, y, w, h);
   }
 
@@ -66,7 +66,7 @@ public abstract class UITextObject extends UIObject {
    * @param font Font
    * @return this
    */
-  public UIObject setFont(PFont font) {
+  public UI2dTextComponent setFont(PFont font) {
     if (this.font != font) {
       this.font = font;
       redraw();
@@ -98,7 +98,7 @@ public abstract class UITextObject extends UIObject {
    * @param hasFontColor true or false
    * @return this
    */
-  public UITextObject setFontColor(boolean hasFontColor) {
+  public UI2dTextComponent setFontColor(boolean hasFontColor) {
     if (this.hasFontColor != hasFontColor) {
       this.hasFontColor = hasFontColor;
       redraw();
@@ -112,7 +112,7 @@ public abstract class UITextObject extends UIObject {
    * @param fontColor color
    * @return this
    */
-  public UITextObject setFontColor(int fontColor) {
+  public UI2dTextComponent setFontColor(int fontColor) {
     if (!this.hasFontColor|| (this.fontColor != fontColor)) {
       this.hasFontColor = true;
       this.fontColor = fontColor;

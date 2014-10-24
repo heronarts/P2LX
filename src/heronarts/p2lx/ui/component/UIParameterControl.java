@@ -30,9 +30,9 @@ import heronarts.lx.parameter.DiscreteParameter;
 import heronarts.lx.parameter.LXListenableNormalizedParameter;
 import heronarts.lx.parameter.LXParameter;
 import heronarts.lx.parameter.LXParameterListener;
-import heronarts.p2lx.ui.UIObject;
+import heronarts.p2lx.ui.UI2dComponent;
 
-public abstract class UIParameterControl extends UIObject implements
+public abstract class UIParameterControl extends UI2dComponent implements
     LXParameterListener {
 
   protected LXListenableNormalizedParameter parameter = null;
