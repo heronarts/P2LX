@@ -25,10 +25,10 @@
 package heronarts.p2lx.ui.component;
 
 import heronarts.p2lx.ui.UI;
-import heronarts.p2lx.ui.UIContext;
+import heronarts.p2lx.ui.UI2dContext;
 import processing.core.PImage;
 
-public class UIImageContext extends UIContext {
+public class UIImageContext extends UI2dContext {
   public UIImageContext(UI ui, PImage image) {
     this(ui, image, 0, 0);
   }

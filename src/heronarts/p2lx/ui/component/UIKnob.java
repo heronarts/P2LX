@@ -29,6 +29,8 @@ import heronarts.p2lx.ui.UI;
 import heronarts.p2lx.ui.UIFocus;
 import processing.core.PConstants;
 import processing.core.PGraphics;
+import processing.event.KeyEvent;
+import processing.event.MouseEvent;
 
 /**
  * TODO(mcslee): make the label a UILabel subcomponent and optional
@@ -56,6 +58,13 @@ public class UIKnob extends UIParameterControl implements UIFocus {
 
   public UIKnob(float x, float y, float w, float h) {
     super(x, y, w, h);
+  }
+
+  private void setShowValue(boolean showValue) {
+    if (showValue != this.showValue) {
+      this.showValue = showValue;
+      redraw();
+    }
   }
 
   @Override
@@ -109,38 +118,51 @@ public class UIKnob extends UIParameterControl implements UIFocus {
     pg.text(knobLabel, arcCenter, this.knobSize + this.knobLabelHeight - 2);
   }
 
-  private long lastMousePress = 0;
-
   private double dragValue;
 
   @Override
-  public void onMousePressed(float mx, float my) {
+  protected void onKeyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
+    super.onKeyPressed(keyEvent, keyChar, keyCode);
+    if ((keyChar == ' ') || (keyCode == java.awt.event.KeyEvent.VK_ENTER)) {
+      setShowValue(true);
+    }
+  }
+
+  @Override
+  protected void onKeyReleased(KeyEvent keyEvent, char keyChar, int keyCode) {
+    super.onKeyReleased(keyEvent, keyChar, keyCode);
+    if ((keyChar == ' ') || (keyCode == java.awt.event.KeyEvent.VK_ENTER)) {
+      setShowValue(false);
+    }
+  }
+
+  @Override
+  protected void onMousePressed(MouseEvent mouseEvent, float mx, float my) {
     this.dragValue = getNormalized();
-    long now = System.currentTimeMillis();
-    if (now - lastMousePress < DOUBLE_CLICK_THRESHOLD) {
-      if (this.parameter != null) {
-        this.parameter.reset();
-      }
-      this.lastMousePress = 0;
-    } else {
-      this.lastMousePress = now;
+    if ((this.parameter != null) && (mouseEvent.getCount() > 1)) {
+      this.parameter.reset();
     }
     this.showValue = true;
     redraw();
   }
 
   @Override
-  public void onMouseReleased(float mx, float my) {
+  protected void onMouseReleased(MouseEvent mouseEvent, float mx, float my) {
     this.showValue = false;
     redraw();
   }
 
   @Override
-  public void onMouseDragged(float mx, float my, float dx, float dy) {
+  protected void onMouseDragged(MouseEvent mouseEvent, float mx, float my, float dx, float dy) {
     if (!isEnabled()) {
       return;
     }
     this.dragValue = LXUtils.constrain(this.dragValue - dy / 100., 0, 1);
     setNormalized(this.dragValue);
+  }
+
+  @Override
+  protected void onBlur() {
+    setShowValue(false);
   }
 }

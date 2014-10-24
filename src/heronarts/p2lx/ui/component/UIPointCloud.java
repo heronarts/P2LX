@@ -22,17 +22,20 @@
  * @version     ##library.prettyVersion## (##library.version##)
  */
 
-package heronarts.p2lx.ui;
+package heronarts.p2lx.ui.component;
 
 import heronarts.lx.model.LXModel;
 import heronarts.lx.model.LXPoint;
 import heronarts.p2lx.P2LX;
+import heronarts.p2lx.ui.UI;
+import heronarts.p2lx.ui.UI3dComponent;
 import processing.core.PConstants;
+import processing.core.PGraphics;
 
 /**
  * Draws a cloud of points in the layer
  */
-public class UIPointCloud extends UICameraComponent {
+public class UIPointCloud extends UI3dComponent {
 
   protected final P2LX lx;
 
@@ -75,14 +78,14 @@ public class UIPointCloud extends UICameraComponent {
   }
 
   @Override
-  protected void onDraw(UI ui) {
+  protected void onDraw(UI ui, PGraphics pg) {
     int[] colors = this.lx.getColors();
-    ui.applet.strokeWeight(this.pointWeight);
-    ui.applet.beginShape(PConstants.POINTS);
+    pg.strokeWeight(this.pointWeight);
+    pg.beginShape(PConstants.POINTS);
     for (LXPoint p : this.model.points) {
-      ui.applet.stroke(colors[p.index]);
-      ui.applet.vertex(p.x, p.y, p.z);
+      pg.stroke(colors[p.index]);
+      pg.vertex(p.x, p.y, p.z);
     }
-    ui.applet.endShape();
+    pg.endShape();
   }
 }

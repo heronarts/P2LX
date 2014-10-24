@@ -22,19 +22,21 @@
  * @version     ##library.prettyVersion## (##library.version##)
  */
 
-package heronarts.p2lx.ui;
+package heronarts.p2lx.ui.component;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
+import processing.core.PGraphics;
 import processing.opengl.PGL;
 import processing.opengl.PJOGL;
 import processing.opengl.PShader;
 import heronarts.lx.model.LXModel;
 import heronarts.lx.model.LXPoint;
 import heronarts.p2lx.P2LX;
+import heronarts.p2lx.ui.UI;
 
 /**
  * Same as a UIPointCloud, except this version uses GLSL to draw
@@ -101,7 +103,7 @@ public class UIGLPointCloud extends UIPointCloud {
   }
 
   @Override
-  protected void onDraw(UI ui) {
+  protected void onDraw(UI ui, PGraphics pg) {
     int[] colors = this.lx.getColors();
 
     // Put our new colors in the vertex data

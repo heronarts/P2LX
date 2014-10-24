@@ -29,12 +29,13 @@ import heronarts.lx.parameter.LXParameter;
 import heronarts.lx.parameter.LXParameterListener;
 import heronarts.p2lx.ui.UI;
 import heronarts.p2lx.ui.UIFocus;
-import heronarts.p2lx.ui.UITextObject;
+import heronarts.p2lx.ui.UI2dTextComponent;
 import processing.core.PConstants;
 import processing.core.PGraphics;
 import processing.event.KeyEvent;
+import processing.event.MouseEvent;
 
-public class UIButton extends UITextObject implements UIFocus {
+public class UIButton extends UI2dTextComponent implements UIFocus {
 
   protected boolean active = false;
   protected boolean isMomentary = false;
@@ -97,26 +98,26 @@ public class UIButton extends UITextObject implements UIFocus {
   }
 
   @Override
-  protected void onMousePressed(float mx, float my) {
+  protected void onMousePressed(MouseEvent mouseEvent, float mx, float my) {
     setActive(this.isMomentary ? true : !this.active);
   }
 
   @Override
-  protected void onMouseReleased(float mx, float my) {
+  protected void onMouseReleased(MouseEvent mouseEvent, float mx, float my) {
     if (this.isMomentary) {
       setActive(false);
     }
   }
 
   @Override
-  public void onKeyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
+  protected void onKeyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
     if ((keyChar == ' ') || (keyCode == java.awt.event.KeyEvent.VK_ENTER)) {
       setActive(this.isMomentary ? true : !this.active);
     }
   }
 
   @Override
-  public void onKeyReleased(KeyEvent keyEvent, char keyChar, int keyCode) {
+  protected void onKeyReleased(KeyEvent keyEvent, char keyChar, int keyCode) {
     if ((keyChar == ' ') || (keyCode == java.awt.event.KeyEvent.VK_ENTER)) {
       if (this.isMomentary) {
         setActive(false);
@@ -144,6 +145,11 @@ public class UIButton extends UITextObject implements UIFocus {
     return setActive(!this.active);
   }
 
+  /**
+   * Subclasses may override this to handle changes to the button's state
+   *
+   * @param active Whether button is active
+   */
   protected void onToggle(boolean active) {
   }
 

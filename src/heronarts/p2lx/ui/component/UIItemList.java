@@ -31,7 +31,7 @@ import heronarts.lx.parameter.LXParameter;
 import heronarts.lx.parameter.LXParameterListener;
 import heronarts.p2lx.ui.UI;
 import heronarts.p2lx.ui.UIFocus;
-import heronarts.p2lx.ui.UITextObject;
+import heronarts.p2lx.ui.UI2dTextComponent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,11 +39,12 @@ import java.util.List;
 import processing.core.PConstants;
 import processing.core.PGraphics;
 import processing.event.KeyEvent;
+import processing.event.MouseEvent;
 
 /**
  * UI for a list of state items
  */
-public class UIItemList extends UITextObject implements UIFocus {
+public class UIItemList extends UI2dTextComponent implements UIFocus {
 
   public static interface Item {
 
@@ -122,9 +123,9 @@ public class UIItemList extends UITextObject implements UIFocus {
   }
 
   public UIItemList select() {
-    this.keyedItem = this.items.get(getFocusIndex());
-    this.keyedItem.onMousePressed();
-    this.keyedItem.onMouseReleased();
+    Item selectedItem = this.items.get(getFocusIndex());
+    selectedItem.onMousePressed();
+    selectedItem.onMouseReleased();
     redraw();
     return this;
   }
@@ -186,10 +187,9 @@ public class UIItemList extends UITextObject implements UIFocus {
 
   private boolean scrolling = false;
   private Item pressedItem = null;
-  private Item keyedItem = null;
 
   @Override
-  public void onKeyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
+  protected void onKeyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
     int index = getFocusIndex();
     if (keyCode == java.awt.event.KeyEvent.VK_UP) {
       index = Math.max(0, index - 1);
@@ -203,17 +203,7 @@ public class UIItemList extends UITextObject implements UIFocus {
   }
 
   @Override
-  public void onKeyReleased(KeyEvent keyEvent, char keyChar, int keyCode) {
-    if ((keyChar == ' ') || (keyCode == java.awt.event.KeyEvent.VK_ENTER)) {
-      if (this.keyedItem != null) {
-        this.keyedItem.onMouseReleased();
-        redraw();
-      }
-    }
-  }
-
-  @Override
-  public void onMousePressed(float mx, float my) {
+  protected void onMousePressed(MouseEvent mouseEvent, float mx, float my) {
     this.pressedItem = null;
     if (this.hasScroll && mx >= this.width - 12) {
       if ((my >= this.scrollYStart)
@@ -233,7 +223,7 @@ public class UIItemList extends UITextObject implements UIFocus {
   }
 
   @Override
-  public void onMouseReleased(float mx, float my) {
+  protected void onMouseReleased(MouseEvent mouseEvent, float mx, float my) {
     this.scrolling = false;
     if (this.pressedItem != null) {
       this.pressedItem.onMouseReleased();
@@ -244,7 +234,7 @@ public class UIItemList extends UITextObject implements UIFocus {
   private float dAccum = 0;
 
   @Override
-  public void onMouseDragged(float mx, float my, float dx, float dy) {
+  protected void onMouseDragged(MouseEvent mouseEvent, float mx, float my, float dx, float dy) {
     if (this.scrolling) {
       this.dAccum += dy;
       float scrollOne = this.height / this.items.size();
@@ -259,9 +249,9 @@ public class UIItemList extends UITextObject implements UIFocus {
   private float wAccum = 0;
 
   @Override
-  public void onMouseWheel(float mx, float my, float delta) {
+  protected void onMouseWheel(MouseEvent mouseEvent, float mx, float my, float delta) {
     if (!hasFocus()) {
-      focus();
+      // TODO(mcslee): focus
     }
     this.wAccum += delta;
     int offset = (int) (this.wAccum / 5);

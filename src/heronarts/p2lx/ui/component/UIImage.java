@@ -25,11 +25,11 @@
 package heronarts.p2lx.ui.component;
 
 import heronarts.p2lx.ui.UI;
-import heronarts.p2lx.ui.UIObject;
+import heronarts.p2lx.ui.UI2dComponent;
 import processing.core.PGraphics;
 import processing.core.PImage;
 
-public class UIImage extends UIObject {
+public class UIImage extends UI2dComponent {
 
   private final PImage image;
 

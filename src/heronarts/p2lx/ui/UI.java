@@ -43,17 +43,134 @@ public class UI {
 
   private static UI instance = null;
 
+  private class UIRoot extends UIObject implements UI2dContainer {
+
+    private UIRoot() {
+      this.ui = UI.this;
+    }
+
+    @Override
+    protected void onKeyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
+      if (keyCode == java.awt.event.KeyEvent.VK_TAB) {
+        if (keyEvent.isShiftDown()) {
+          focusPrev();
+        } else {
+          focusNext();
+        }
+      }
+    }
+
+    private void focusPrev() {
+      UIObject focusTarget = findPrevFocusable();
+      if (focusTarget != null) {
+        focusTarget.focus();
+      }
+    }
+
+    private void focusNext() {
+      UIObject focusTarget = findNextFocusable();
+      if (focusTarget != null) {
+        focusTarget.focus();
+      }
+    }
+
+    private UIObject findCurrentFocus() {
+      UIObject currentFocus = this;
+      while (currentFocus.focusedChild != null) {
+        currentFocus = currentFocus.focusedChild;
+      }
+      return currentFocus;
+    }
+
+    private UIObject findNextFocusable() {
+      // Identify the deepest focused object
+      UIObject focus = findCurrentFocus();
+
+      // Check if it has a child that is eligible for focus
+      UIObject focusableChild = findNextFocusableChild(focus, 0);
+      if (focusableChild != null) {
+        return focusableChild;
+      }
+
+      // Work up the tree, trying siblings at each level
+      while (focus.parent != null) {
+        int focusIndex = focus.parent.children.indexOf(focus);
+        focusableChild = findNextFocusableChild(focus.parent, focusIndex + 1);
+        if (focusableChild != null) {
+          return focusableChild;
+        }
+        focus = focus.parent;
+      }
+
+      // We ran out! Loop around from the front...
+      return findNextFocusableChild(this, 0);
+    }
+
+    private UIObject findNextFocusableChild(UIObject focus, int startIndex) {
+      for (int i = startIndex; i < focus.children.size(); ++i) {
+        UIObject child = focus.children.get(i);
+        if (child.isVisible()) {
+          if (child instanceof UIFocus) {
+            return child;
+          }
+          UIObject recurse = findNextFocusableChild(child, 0);
+          if (recurse != null) {
+            return recurse;
+          }
+        }
+      }
+      return null;
+    }
+
+    private UIObject findPrevFocusable() {
+      // Identify the deepest focused object
+      UIObject focus = findCurrentFocus();
+
+      // Check its previous siblings, depth-first
+      while (focus.parent != null) {
+        int focusIndex = focus.parent.children.indexOf(focus);
+        UIObject focusableChild = findPrevFocusableChild(focus.parent, focusIndex - 1);
+        if (focusableChild != null) {
+          return focusableChild;
+        }
+        if (focus.parent instanceof UIFocus) {
+          return focus.parent;
+        }
+        focus = focus.parent;
+      }
+
+      // We failed! Wrap around to the end
+      return findPrevFocusableChild(this, this.children.size() - 1);
+    }
+
+    private UIObject findPrevFocusableChild(UIObject focus, int startIndex) {
+      for (int i = startIndex; i >= 0; --i) {
+        UIObject child = focus.children.get(i);
+        if (child.isVisible()) {
+          UIObject recurse = findPrevFocusableChild(child, child.children.size() - 1);
+          if (recurse != null) {
+            return recurse;
+          }
+          if (child instanceof UIFocus) {
+            return child;
+          }
+        }
+      }
+      return null;
+    }
+  }
+
   /**
    * Redraw may be called from any thread
    */
-  private final List<UIObject> otherThreadRedrawList =
-    Collections.synchronizedList(new ArrayList<UIObject>());
+  private final List<UI2dComponent> otherThreadRedrawList =
+    Collections.synchronizedList(new ArrayList<UI2dComponent>());
 
   /**
    * Objects to redraw on current pass thru animation thread
    */
-  private final List<UIObject> localThreadRedrawList =
-    new ArrayList<UIObject>();
+  private final List<UI2dComponent> localThreadRedrawList =
+    new ArrayList<UI2dComponent>();
 
   /**
    * Input events coming from the event thread
@@ -74,31 +191,9 @@ public class UI {
 
   private final P2LX lx;
 
-  /**
-   * PApplet that this UI belongs to
-   */
   final PApplet applet;
 
-  /**
-   * All the layers in this UI
-   */
-  private final List<UILayer> layers = new ArrayList<UILayer>();
-
-  private final List<UILayer> localThreadLayers = new ArrayList<UILayer>();
-
-  private final List<UIObject> focusables = new ArrayList<UIObject>();
-
-  private int focusIndex = -1;
-
-  /**
-   * Layer that was pressed on
-   */
-  private UILayer pressedLayer = null;
-
-  /**
-   * Layer that has focus
-   */
-  private UILayer focusedLayer = null;
+  private UIRoot root;
 
   /**
    * UI look and feel
@@ -132,6 +227,7 @@ public class UI {
     this.lx = lx;
     this.applet = applet;
     this.theme = new UITheme(applet);
+    this.root = new UIRoot();
     applet.registerMethod("draw", this);
     applet.registerMethod("keyEvent", this);
     applet.registerMethod("mouseEvent", this);
@@ -146,99 +242,46 @@ public class UI {
   }
 
   /**
-   * Add a context to this UI
+   * Add a 2d context to this UI
    *
    * @param layer UI layer
-   * @return this UI
+   * @return this
    */
-  public UI addLayer(UILayer layer) {
-    synchronized (this.layers) {
-      this.layers.add(layer);
-    }
-    if (layer instanceof UIObject) {
-      UIObject object = (UIObject) layer;
-      object.setUI(this);
-      object.redraw();
-      addFocusables(object);
-    }
+  public UI addLayer(UI2dContext layer) {
+    layer.addToContainer(this.root);
     return this;
   }
 
-  private void addFocusables(UIObject o) {
-    if (o instanceof UIFocus) {
-      this.focusables.add(o);
-    }
-    for (UIObject child : o.children) {
-      addFocusables(child);
-    }
-  }
-
-  private void removeFocusables(UIObject o) {
-    if (o instanceof UIFocus) {
-      this.focusables.remove(o);
-    }
-    for (UIObject child : o.children) {
-      removeFocusables(child);
-    }
-  }
-
-  void willFocus(UILayer layer, UIObject object) {
-    if (this.focusedLayer != layer) {
-      if (this.focusedLayer instanceof UIContext) {
-        ((UIObject) this.focusedLayer)._blur();
-      }
-      this.focusedLayer = layer;
-    }
-    if (object != null) {
-      int index = this.focusables.indexOf(object);
-      if (index >= 0) {
-        this.focusIndex = index;
-      }
-    }
-  }
-
-  void didBlur(UILayer layer) {
-    if (this.focusedLayer != layer) {
-      throw new IllegalStateException("Tried to blur non-focused layer");
-    }
-    this.focusedLayer = null;
-  }
-
-  private void focusNext() {
-    int fsz = this.focusables.size();
-    if (fsz > 0) {
-      this.focusIndex = (this.focusIndex + 1) % fsz;
-      this.focusables.get(this.focusIndex).focus();
-    }
-  }
-
-  private void focusPrevious() {
-    int fsz = this.focusables.size();
-    if (fsz > 0) {
-      --this.focusIndex;
-      if (this.focusIndex < 0) {
-        this.focusIndex = (fsz + (this.focusIndex % fsz)) % fsz;
-      }
-      this.focusables.get(this.focusIndex).focus();
-    }
-  }
-
   /**
-   * Remove a context from this UI
+   * Remove a 2d context from this UI
    *
    * @param layer UI layer
    * @return this UI
    */
-  public UI removeLayer(UILayer layer) {
-    if (layer instanceof UIContext) {
-      ((UIObject) layer)._blur();
+  public UI removeLayer(UI2dContext layer) {
+    layer.removeFromContainer();
+    return this;
+  }
+
+  /**
+   * Add a 3d context to this UI
+   *
+   * @param layer 3d context
+   * @return this UI
+   */
+  public UI addLayer(UI3dContext layer) {
+    this.root.children.add(layer);
+    layer.parent = this.root;
+    layer.setUI(this);
+    return this;
+  }
+
+  public UI removeLayer(UI3dContext layer) {
+    if (layer.parent != this.root) {
+      throw new IllegalStateException("Cannot remove 3d layer which is not present");
     }
-    synchronized (this.layers) {
-      this.layers.remove(layer);
-    }
-    if (layer instanceof UIObject) {
-      removeFocusables((UIObject) layer);
-    }
+    this.root.children.remove(layer);
+    layer.parent = null;
     return this;
   }
 
@@ -248,15 +291,13 @@ public class UI {
    * @param layer UI layer
    * @return this UI
    */
-  public UI bringToTop(UILayer layer) {
-    synchronized (this.layers) {
-      this.layers.remove(layer);
-      this.layers.add(layer);
-    }
+  public UI bringToTop(UI2dContext layer) {
+    this.root.children.remove(layer);
+    this.root.children.add(layer);
     return this;
   }
 
-  void redraw(UIObject object) {
+  void redraw(UI2dComponent object) {
     this.otherThreadRedrawList.add(object);
   }
 
@@ -265,29 +306,24 @@ public class UI {
    */
   public final void draw() {
     long drawStart = System.nanoTime();
+
+    // Iterate through all objects that need redraw state marked
     this.localThreadRedrawList.clear();
     synchronized (this.otherThreadRedrawList) {
       this.localThreadRedrawList.addAll(this.otherThreadRedrawList);
       this.otherThreadRedrawList.clear();
     }
-    for (UIObject object : this.localThreadRedrawList) {
+    for (UI2dComponent object : this.localThreadRedrawList) {
       object._redraw();
     }
 
-    // Make a local copy of the layers to draw in this pass, other threads
-    // could modify the layer stack as we're drawing
-    this.localThreadLayers.clear();
-    synchronized (this.layers) {
-      this.localThreadLayers.addAll(this.layers);
-    }
-    for (UILayer layer : this.localThreadLayers) {
-      layer.draw();
-    }
+    // Draw from the root
+    this.root.draw(this, this.applet.g);
 
     this.timer.drawNanos = System.nanoTime() - drawStart;
   }
 
-  boolean isThreaded() {
+  private boolean isThreaded() {
     return (this.lx != null) && (this.lx.engine.isThreaded());
   }
 
@@ -311,7 +347,6 @@ public class UI {
         }
       }
     }
-
   }
 
   public void mouseEvent(MouseEvent mouseEvent) {
@@ -322,65 +357,31 @@ public class UI {
     }
   }
 
+  private float pmx, pmy;
+
   private void _mouseEvent(MouseEvent mouseEvent) {
     switch (mouseEvent.getAction()) {
     case MouseEvent.WHEEL:
-      mouseWheel(mouseEvent.getX(), mouseEvent.getY(), mouseEvent.getCount());
+      this.root.mouseWheel(mouseEvent, mouseEvent.getX(), mouseEvent.getY(), mouseEvent.getCount());
       return;
     case MouseEvent.PRESS:
-      mousePressed(mouseEvent.getX(), mouseEvent.getY());
+      this.pmx = mouseEvent.getX();
+      this.pmy = mouseEvent.getY();
+      this.root.mousePressed(mouseEvent, this.pmx, this.pmy);
       break;
     case processing.event.MouseEvent.RELEASE:
-      mouseReleased(mouseEvent.getX(), mouseEvent.getY());
+      this.root.mouseReleased(mouseEvent, mouseEvent.getX(), mouseEvent.getY());
       break;
     case processing.event.MouseEvent.CLICK:
-      mouseClicked(mouseEvent.getX(), mouseEvent.getY());
+      this.root.mouseClicked(mouseEvent, mouseEvent.getX(), mouseEvent.getY());
       break;
     case processing.event.MouseEvent.DRAG:
-      mouseDragged(mouseEvent.getX(), mouseEvent.getY());
+      float mx = mouseEvent.getX();
+      float my = mouseEvent.getY();
+      this.root.mouseDragged(mouseEvent, mx, my, mx - this.pmx, my - this.pmy);
+      this.pmx = mx;
+      this.pmy = my;
       break;
-    }
-  }
-
-  private void mousePressed(int x, int y) {
-    this.pressedLayer = null;
-    for (int i = this.layers.size() - 1; i >= 0; --i) {
-      UILayer layer = this.layers.get(i);
-      if (layer.mousePressed(x, y)) {
-        this.pressedLayer = layer;
-        break;
-      }
-    }
-  }
-
-  private void mouseReleased(int x, int y) {
-    if (this.pressedLayer != null) {
-      this.pressedLayer.mouseReleased(x, y);
-      this.pressedLayer = null;
-    }
-  }
-
-  public void mouseClicked(int x, int y) {
-    for (int i = this.layers.size() - 1; i >= 0; --i) {
-      UILayer layer = this.layers.get(i);
-      if (layer.mouseClicked(x, y)) {
-        break;
-      }
-    }
-  }
-
-  private void mouseDragged(int x, int y) {
-    if (this.pressedLayer != null) {
-      this.pressedLayer.mouseDragged(x, y);
-    }
-  }
-
-  private void mouseWheel(int x, int y, int rotation) {
-    for (int i = this.layers.size() - 1; i >= 0; --i) {
-      UILayer layer = this.layers.get(i);
-      if (layer.mouseWheel(x, y, rotation)) {
-        break;
-      }
     }
   }
 
@@ -397,41 +398,16 @@ public class UI {
     int keyCode = keyEvent.getKeyCode();
     switch (keyEvent.getAction()) {
     case KeyEvent.RELEASE:
-      keyReleased(keyEvent, keyChar, keyCode);
+      this.root.keyReleased(keyEvent, keyChar, keyCode);
       break;
     case KeyEvent.PRESS:
-      keyPressed(keyEvent, keyChar, keyCode);
+      this.root.keyPressed(keyEvent, keyChar, keyCode);
       break;
     case KeyEvent.TYPE:
-      keyTyped(keyEvent, keyChar, keyCode);
+      this.root.keyTyped(keyEvent, keyChar, keyCode);
       break;
     default:
       throw new RuntimeException("Invalid keyEvent type: " + keyEvent.getAction());
-    }
-  }
-
-  private void keyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
-    if (keyCode == java.awt.event.KeyEvent.VK_TAB) {
-      if (keyEvent.isShiftDown()) {
-        focusPrevious();
-      } else {
-        focusNext();
-      }
-    }
-    if (this.focusedLayer != null) {
-      this.focusedLayer.keyPressed(keyEvent, keyChar, keyCode);
-    }
-  }
-
-  private void keyReleased(KeyEvent keyEvent, char keyChar, int keyCode) {
-    if (this.focusedLayer != null) {
-      this.focusedLayer.keyReleased(keyEvent, keyChar, keyCode);
-    }
-  }
-
-  private void keyTyped(KeyEvent keyEvent, char keyChar, int keyCode) {
-    if (this.focusedLayer != null) {
-      this.focusedLayer.keyTyped(keyEvent, keyChar, keyCode);
     }
   }
 

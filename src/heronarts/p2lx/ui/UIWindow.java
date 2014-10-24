@@ -24,6 +24,7 @@
 
 package heronarts.p2lx.ui;
 
+import processing.event.MouseEvent;
 import heronarts.lx.LXUtils;
 import heronarts.p2lx.ui.component.UILabel;
 
@@ -31,7 +32,7 @@ import heronarts.p2lx.ui.component.UILabel;
  * A UIWindow is a UIContext that by default has a title bar and can be dragged
  * around when the mouse is pressed on the title bar.
  */
-public class UIWindow extends UIContext {
+public class UIWindow extends UI2dContext {
 
   public final static int TITLE_LABEL_HEIGHT = 24;
 
@@ -78,25 +79,17 @@ public class UIWindow extends UIContext {
   }
 
   @Override
-  protected void onMousePressed(float mx, float my) {
+  protected void onMousePressed(MouseEvent mouseEvent, float mx, float my) {
     this.movingWindow = (my < TITLE_LABEL_HEIGHT);
-    if (this.parent == null) {
-      this.ui.bringToTop(this);
-    }
-    _focus(this);
+    bringToFront();
+    focus();
   }
 
   @Override
-  protected void onMouseDragged(float mx, float my, float dx, float dy) {
+  protected void onMouseDragged(MouseEvent mouseEvent, float mx, float my, float dx, float dy) {
     if (this.movingWindow) {
-      float maxW = this.ui.applet.width;
-      float maxH = this.ui.applet.height;
-      if (this.parent != null) {
-        maxW = this.parent.width;
-        maxH = this.parent.height;
-      }
-      float newX = LXUtils.constrainf(this.x + dx, 0, maxW - this.width);
-      float newY = LXUtils.constrainf(this.y + dy, 0, maxH - this.height);
+      float newX = LXUtils.constrainf(this.x + dx, 0, this.parent.getWidth() - this.width);
+      float newY = LXUtils.constrainf(this.y + dy, 0, this.parent.getHeight() - this.height);
       setPosition(newX, newY);
     }
   }
