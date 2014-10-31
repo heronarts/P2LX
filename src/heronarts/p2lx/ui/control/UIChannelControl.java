@@ -39,33 +39,46 @@ import java.util.List;
 
 public class UIChannelControl extends UIWindow {
 
+  private final static String DEFAULT_TITLE = "PATTERN";
+  private final static int DEFAULT_NUM_KNOBS = 12;
+  private final static int KNOBS_PER_ROW = 4;
+  private final static int KNOB_ROW_HEIGHT = 48;
+  private final static int BASE_HEIGHT = 174;
+  public final static int WIDTH = 140;
+
   private final LXChannel channel;
 
-  private final static int NUM_KNOBS = 12;
-  private final static int KNOBS_PER_ROW = 4;
-
-  public final static int WIDTH = 140;
-  public final static int HEIGHT = 318;
-
   public UIChannelControl(UI ui, LX lx, float x, float y) {
-    this(ui, lx, "PATTERN", x, y);
+    this(ui, lx, DEFAULT_TITLE, x, y);
+  }
+
+  public UIChannelControl(UI ui, LX lx, int numKnobs, float x, float y) {
+    this(ui, lx.engine.getChannel(0), numKnobs, x, y);
   }
 
   public UIChannelControl(UI ui, LX lx, String label, float x, float y) {
     this(ui, lx.engine.getChannel(0), label, x, y);
   }
 
+  public UIChannelControl(UI ui, LX lx, String label, int numKnobs, float x, float y) {
+    this(ui, lx.engine.getChannel(0), label, numKnobs, x, y);
+  }
+
+  public UIChannelControl(UI ui, LXChannel channel, int numKnobs, float x, float y) {
+    this(ui, channel, DEFAULT_TITLE, numKnobs, x, y);
+  }
+
   public UIChannelControl(UI ui, LXChannel channel, float x, float y) {
-    this(ui, channel, "PATTERN", x, y);
+    this(ui, channel, DEFAULT_TITLE, x, y);
   }
 
   public UIChannelControl(UI ui, LXChannel channel, String label, float x, float y) {
-    this(ui, channel, label, x, y, WIDTH, HEIGHT);
+    this(ui, channel, label, DEFAULT_NUM_KNOBS, x, y);
   }
 
-  public UIChannelControl(UI ui, LXChannel channel, String label, float x, float y,
-      float w, float h) {
-    super(ui, label, x, y, w, h);
+  public UIChannelControl(UI ui, LXChannel channel, String label, int numKnobs, float x, float y) {
+    super(ui, label, x, y, WIDTH, BASE_HEIGHT + KNOB_ROW_HEIGHT * (numKnobs / KNOBS_PER_ROW));
+
     this.channel = channel;
     int yp = TITLE_LABEL_HEIGHT;
 
@@ -74,15 +87,17 @@ public class UIChannelControl extends UIWindow {
       items.add(new PatternScrollItem(p));
     }
     final UIItemList patternList =
-      new UIItemList(1, yp, w - 2, 140)
+      new UIItemList(1, yp, this.width - 2, 140)
       .setItems(items);
-    patternList.setBackgroundColor(ui.theme.getWindowBackgroundColor()).addToContainer(this);
+    patternList
+    .setBackgroundColor(ui.theme.getWindowBackgroundColor())
+    .addToContainer(this);
     yp += patternList.getHeight() + 10;
 
-    final UIKnob[] knobs = new UIKnob[NUM_KNOBS];
+    final UIKnob[] knobs = new UIKnob[numKnobs];
     for (int ki = 0; ki < knobs.length; ++ki) {
       knobs[ki] = new UIKnob(5 + 34 * (ki % KNOBS_PER_ROW), yp
-          + (ki / KNOBS_PER_ROW) * 48);
+          + (ki / KNOBS_PER_ROW) * KNOB_ROW_HEIGHT);
       knobs[ki].addToContainer(this);
     }
 
