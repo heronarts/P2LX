@@ -31,6 +31,7 @@ import heronarts.lx.parameter.LXParameter;
 import heronarts.lx.pattern.LXPattern;
 import heronarts.p2lx.ui.UI;
 import heronarts.p2lx.ui.UIWindow;
+import heronarts.p2lx.ui.component.UIButton;
 import heronarts.p2lx.ui.component.UIItemList;
 import heronarts.p2lx.ui.component.UIKnob;
 
@@ -81,6 +82,12 @@ public class UIChannelControl extends UIWindow {
 
     this.channel = channel;
     int yp = TITLE_LABEL_HEIGHT;
+
+    new UIButton(width-18, 4, 14, 14)
+    .setParameter(channel.autoTransitionEnabled)
+    .setLabel("A")
+    .setActiveColor(ui.theme.getControlBackgroundColor())
+    .addToContainer(this);
 
     List<UIItemList.Item> items = new ArrayList<UIItemList.Item>();
     for (LXPattern p : channel.getPatterns()) {

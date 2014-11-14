@@ -50,22 +50,21 @@ public class UISlider extends UIParameterControl implements UIFocus {
 
   public UISlider(Direction direction, float x, float y, float w, float h) {
     super(x, y, w, h);
+    setBackgroundColor(UI.get().theme.getWindowBackgroundColor());
     this.direction = direction;
-    setBackgroundColor(0xff333333);
-    setBorderColor(0xff666666);
   }
 
   @Override
   protected void onDraw(UI ui, PGraphics pg) {
     pg.noStroke();
-    pg.fill(0xff222222);
+    pg.fill(ui.theme.getControlBackgroundColor());
     switch (this.direction) {
     case HORIZONTAL:
       pg.rect(4, this.height / 2 - 2, this.width - 8, 4);
       pg.fill(isEnabled() ? ui.theme.getPrimaryColor() : ui.theme.getControlDisabledColor());
       pg.rect(4, this.height / 2 - 2, (int) ((this.width - 8) * getNormalized()), 4);
-      pg.fill(0xff666666);
-      pg.stroke(0xff222222);
+      pg.fill(ui.theme.getControlDisabledColor());
+      pg.stroke(ui.theme.getControlBorderColor());
       pg.rect((int) (4 + getNormalized() * (this.width - 8 - HANDLE_WIDTH)), 4,
           HANDLE_WIDTH, this.height - 8);
       break;
@@ -74,8 +73,8 @@ public class UISlider extends UIParameterControl implements UIFocus {
       pg.fill(isEnabled() ? ui.theme.getPrimaryColor() : ui.theme.getControlDisabledColor());
       int fillSize = (int) (getNormalized() * (this.height - 8));
       pg.rect(this.width / 2 - 2, this.height - 4 - fillSize, 4, fillSize);
-      pg.fill(0xff666666);
-      pg.stroke(0xff222222);
+      pg.fill(ui.theme.getControlDisabledColor());
+      pg.stroke(ui.theme.getControlBorderColor());
       pg.rect(4, (int) (4 + (1 - getNormalized())
           * (this.height - 8 - HANDLE_WIDTH)), this.width - 8, HANDLE_WIDTH);
       break;

@@ -93,7 +93,7 @@ public class UIButton extends UI2dTextComponent implements UIFocus {
       pg.fill(this.active ? 0xffffffff : getFontColor());
       pg.textFont(hasFont() ? getFont() : ui.theme.getControlFont());
       pg.textAlign(PConstants.CENTER);
-      pg.text(label, this.width / 2, this.height - 5);
+      pg.text(label, this.width / 2, (int) (this.height * .75));
     }
   }
 

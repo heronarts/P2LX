@@ -30,6 +30,7 @@ import processing.event.MouseEvent;
 import heronarts.lx.LXUtils;
 import heronarts.lx.color.ColorParameter;
 import heronarts.lx.color.LXColor;
+import heronarts.lx.color.LXPalette;
 import heronarts.lx.parameter.LXParameter;
 import heronarts.lx.parameter.LXParameterListener;
 import heronarts.p2lx.ui.UI;
@@ -40,7 +41,13 @@ public class UIColorSwatch extends UI2dComponent implements UIFocus {
 
   public final ColorParameter color;
 
+  private boolean enabled = true;
+
   private final static int RECT_SIZE = 3;
+
+  public UIColorSwatch(LXPalette palette, float x, float y, float w, float h) {
+    this(palette.color, x, y, w, h);
+  }
 
   public UIColorSwatch(ColorParameter color, float x, float y, float w, float h) {
     super(x, y, w, h);
@@ -52,16 +59,26 @@ public class UIColorSwatch extends UI2dComponent implements UIFocus {
     });
   }
 
+  public UIColorSwatch setEnabled(boolean enabled) {
+    if (this.enabled != enabled) {
+      this.enabled = enabled;
+      redraw();
+    }
+    return this;
+  }
+
   @Override
   protected void onDraw(UI ui, PGraphics pg) {
     // Gradient
     pg.noStroke();
+    float maxBright = this.color.brightness.getValuef();
+    float minBright = Math.min(20, maxBright);
     for (int x = 0; x < this.width; ++x) {
       for (int y = 0; y < this.height; ++y) {
         pg.fill(LXColor.hsb(
           360 * x / this.width,
-          100 * (1 - y / this.height),
-          this.color.brightness.getValuef()
+          (this.enabled ? 100 : 50) * (1 - y / this.height),
+          (!this.enabled ? (minBright + (maxBright-minBright) *(y / this.height)) : maxBright)
         ));
         pg.rect(x, y, 1, 1);
       }
@@ -70,7 +87,7 @@ public class UIColorSwatch extends UI2dComponent implements UIFocus {
     // Cursor
     pg.strokeWeight(1);
     pg.noFill();
-    pg.stroke(ui.theme.getWindowBorderColor());
+    pg.stroke(this.enabled ? ui.theme.getWindowBorderColor() : ui.theme.getControlDisabledColor());
     pg.rect(
       this.color.hue.getNormalizedf() * (this.width-RECT_SIZE-1),
       (1-this.color.saturation.getNormalizedf()) * (this.height-RECT_SIZE-1),
@@ -80,12 +97,16 @@ public class UIColorSwatch extends UI2dComponent implements UIFocus {
 
   @Override
   protected void onMousePressed(MouseEvent mouseEvent, float mx, float my) {
-    updateColor(mx, my);
+    if (this.enabled) {
+      updateColor(mx, my);
+    }
   }
 
   @Override
   protected void onMouseDragged(MouseEvent mouseEvent, float mx, float my, float dx, float dy) {
-    updateColor(mx, my);
+    if (this.enabled) {
+      updateColor(mx, my);
+    }
   }
 
   private void updateColor(float mx, float my) {
@@ -97,6 +118,9 @@ public class UIColorSwatch extends UI2dComponent implements UIFocus {
 
   @Override
   protected void onKeyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
+    if (!this.enabled) {
+      return;
+    }
     double amount = keyEvent.isShiftDown() ? .05 : .01;
     if (keyCode == java.awt.event.KeyEvent.VK_LEFT) {
       this.color.hue.setNormalized(this.color.hue.getNormalized() - amount);
