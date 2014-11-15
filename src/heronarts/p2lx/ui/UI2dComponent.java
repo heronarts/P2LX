@@ -449,6 +449,10 @@ public abstract class UI2dComponent extends UIObject {
     }
   }
 
+  protected int getFocusColor(UI ui) {
+    return ui.theme.getFocusColor();
+  }
+
   /**
    * Draws focus on this object. May be overridden by subclasses.
    *
@@ -457,7 +461,7 @@ public abstract class UI2dComponent extends UIObject {
    */
   protected void drawFocus(UI ui, PGraphics pg) {
     int focusSize = (int) Math.min(8, Math.min(this.width, this.height) / 8);
-    pg.stroke(ui.theme.getFocusColor());
+    pg.stroke(getFocusColor(ui));
     pg.noFill();
     // Top left
     pg.line(0, 0, focusSize, 0);

@@ -30,6 +30,7 @@ import heronarts.lx.parameter.DiscreteParameter;
 import heronarts.lx.parameter.LXListenableNormalizedParameter;
 import heronarts.lx.parameter.LXParameter;
 import heronarts.lx.parameter.LXParameterListener;
+import heronarts.p2lx.ui.UI;
 import heronarts.p2lx.ui.UI2dComponent;
 
 public abstract class UIParameterControl extends UI2dComponent implements
@@ -53,6 +54,14 @@ public abstract class UIParameterControl extends UI2dComponent implements
 
   public boolean isEnabled() {
     return (this.parameter != null) && this.enabled;
+  }
+
+  @Override
+  protected int getFocusColor(UI ui) {
+    if (!isEnabled()) {
+      return ui.theme.getControlDisabledColor();
+    }
+    return super.getFocusColor(ui);
   }
 
   public void onParameterChanged(LXParameter parameter) {
