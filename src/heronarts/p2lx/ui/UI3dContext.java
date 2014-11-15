@@ -67,15 +67,28 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
   public final MutableParameter zoomVelocity = new MutableParameter("ZVel", 2400);
 
   /**
+   * Acceleration used to change camera radius (zoom)
+   */
+  public final MutableParameter zoomAcceleration = new MutableParameter("ZAcl", 0);
+
+  /**
    * Max velocity used to damp changes to rotation (theta/phi)
    */
   public final MutableParameter rotateVelocity = new MutableParameter("RVel", 4*Math.PI);
 
-  private final DampedParameter thetaDamped = new DampedParameter(theta, this.rotateVelocity);
+  /**
+   * Acceleration used to change rotation (theta/phi)
+   */
+  public final MutableParameter rotateAcceleration = new MutableParameter("RAcl", 0);
 
-  private final DampedParameter phiDamped = new DampedParameter(phi, this.rotateVelocity);
+  private final DampedParameter thetaDamped =
+    new DampedParameter(this.theta, this.rotateVelocity, this.rotateAcceleration);
 
-  private final DampedParameter radiusDamped = new DampedParameter(radius, this.zoomVelocity);
+  private final DampedParameter phiDamped =
+    new DampedParameter(this.phi, this.rotateVelocity, this.rotateAcceleration);
+
+  private final DampedParameter radiusDamped =
+    new DampedParameter(this.radius, this.zoomVelocity, this.zoomAcceleration);
 
   // Radius bounds
   private float minRadius = 0, maxRadius = Float.MAX_VALUE;
@@ -151,6 +164,17 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
   }
 
   /**
+   * Set's the camera's zoom acceleration, 0 is infinite
+   *
+   * @param zoomAcceleration
+   * @return this
+   */
+  public UI3dContext setZoomAcceleration(float zoomAcceleration) {
+    this.zoomAcceleration.setValue(zoomAcceleration);
+    return this;
+  }
+
+  /**
    * Sets the camera's maximum rotation speed
    *
    * @param rotateVelocity Max radians/per second viewing angle may change by
@@ -158,6 +182,17 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
    */
   public UI3dContext setRotateVelocity(float rotateVelocity) {
     this.rotateVelocity.setValue(rotateVelocity);
+    return this;
+  }
+
+  /**
+   * Set's the camera's rotational acceleration, 0 is infinite
+   *
+   * @param rotateAcceleration
+   * @return this
+   */
+  public UI3dContext setRotateAcceleration(float rotateAcceleration) {
+    this.rotateAcceleration.setValue(rotateAcceleration);
     return this;
   }
 
