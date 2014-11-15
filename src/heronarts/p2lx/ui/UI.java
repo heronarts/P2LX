@@ -270,6 +270,7 @@ public class UI {
    * @return this UI
    */
   public UI addLayer(UI3dContext layer) {
+    this.lx.engine.addLoopTask(layer);
     this.root.children.add(layer);
     layer.parent = this.root;
     layer.setUI(this);

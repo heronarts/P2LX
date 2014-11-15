@@ -24,8 +24,12 @@
 
 package heronarts.p2lx.ui;
 
+import heronarts.lx.LXLoopTask;
 import heronarts.lx.LXUtils;
-
+import heronarts.lx.modulator.DampedParameter;
+import heronarts.lx.parameter.LXParameter;
+import heronarts.lx.parameter.LXParameterListener;
+import heronarts.lx.parameter.MutableParameter;
 import processing.core.PConstants;
 import processing.core.PGraphics;
 import processing.core.PVector;
@@ -36,21 +40,70 @@ import processing.event.MouseEvent;
  * This is a layer that contains a 3d scene with a camera. Mouse movements
  * control the camera, and the scene can contain components.
  */
-public class UI3dContext extends UIObject implements UITabFocus {
+public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
 
   private final PVector center = new PVector(0, 0, 0);
 
   private final PVector eye = new PVector(0, 0, 0);
 
-  // Polar eye position
-  private float theta = 0, phi = 0, radius = 120;
+  /**
+   * Angle of the eye position about the vertical Z-axis
+   */
+  public final MutableParameter theta = new MutableParameter("Theta", 0);
+
+  /**
+   * Angle of the eye position off the X-Y plane
+   */
+  public final MutableParameter phi = new MutableParameter("Phi", 0);
+
+  /**
+   * Radius of the eye positon from center of the scene
+   */
+  public final MutableParameter radius = new MutableParameter("Radius", 120);
+
+  /**
+   * Max velocity used to damp changes to radius (zoom)
+   */
+  public final MutableParameter zoomVelocity = new MutableParameter("ZVel", 2400);
+
+  /**
+   * Max velocity used to damp changes to rotation (theta/phi)
+   */
+  public final MutableParameter rotateVelocity = new MutableParameter("RVel", 4*Math.PI);
+
+  private final DampedParameter thetaDamped = new DampedParameter(theta, this.rotateVelocity);
+
+  private final DampedParameter phiDamped = new DampedParameter(phi, this.rotateVelocity);
+
+  private final DampedParameter radiusDamped = new DampedParameter(radius, this.zoomVelocity);
 
   // Radius bounds
   private float minRadius = 0, maxRadius = Float.MAX_VALUE;
 
+  private static final float MAX_PHI = PConstants.HALF_PI * .9f;
+
   public UI3dContext(UI ui) {
     setUI(ui);
+    this.thetaDamped.start();
+    this.radiusDamped.start();
+    this.phiDamped.start();
     computeEye();
+    this.radius.addListener(new LXParameterListener() {
+      public void onParameterChanged(LXParameter p) {
+        float value = radius.getValuef();
+        if (value < minRadius || value > maxRadius) {
+          radius.setValue(LXUtils.constrainf(value, minRadius, maxRadius));
+        }
+      }
+    });
+    this.phi.addListener(new LXParameterListener() {
+      public void onParameterChanged(LXParameter p) {
+        float value = phi.getValuef();
+        if (value < -MAX_PHI || value > MAX_PHI) {
+          phi.setValue(LXUtils.constrainf(value, -MAX_PHI, MAX_PHI));
+        }
+      }
+    });
   }
 
   /**
@@ -82,8 +135,29 @@ public class UI3dContext extends UIObject implements UITabFocus {
    * @return this
    */
   public UI3dContext setRadius(float radius) {
-    this.radius = radius;
-    computeEye();
+    this.radius.setValue(radius);
+    return this;
+  }
+
+  /**
+   * Sets the camera's maximum zoom speed
+   *
+   * @param zoomVelocity Max units/per second radius may change by
+   * @return this
+   */
+  public UI3dContext setZoomVelocity(float zoomVelocity) {
+    this.zoomVelocity.setValue(zoomVelocity);
+    return this;
+  }
+
+  /**
+   * Sets the camera's maximum rotation speed
+   *
+   * @param rotateVelocity Max radians/per second viewing angle may change by
+   * @return this
+   */
+  public UI3dContext setRotateVelocity(float rotateVelocity) {
+    this.rotateVelocity.setValue(rotateVelocity);
     return this;
   }
 
@@ -94,8 +168,7 @@ public class UI3dContext extends UIObject implements UITabFocus {
    * @return this
    */
   public UI3dContext setTheta(float theta) {
-    this.theta = theta;
-    computeEye();
+    this.theta.setValue(theta);
     return this;
   }
 
@@ -106,8 +179,7 @@ public class UI3dContext extends UIObject implements UITabFocus {
    * @return this
    */
   public UI3dContext setPhi(float phi) {
-    this.phi = phi;
-    computeEye();
+    this.phi.setValue(phi);
     return this;
   }
 
@@ -121,7 +193,7 @@ public class UI3dContext extends UIObject implements UITabFocus {
   public UI3dContext setRadiusBounds(float minRadius, float maxRadius) {
     this.minRadius = minRadius;
     this.maxRadius = maxRadius;
-    setRadius(LXUtils.constrainf(this.radius, minRadius, maxRadius));
+    setRadius(LXUtils.constrainf(this.radius.getValuef(), minRadius, maxRadius));
     return this;
   }
 
@@ -157,29 +229,40 @@ public class UI3dContext extends UIObject implements UITabFocus {
     this.center.x = x;
     this.center.y = y;
     this.center.z = z;
-    computeEye();
     return this;
   }
 
+  /**
+   * Gets the center position of the scene
+   *
+   * @return center of scene
+   */
   public PVector getCenter() {
     return this.center;
   }
 
+  /**
+   * Gets the latest computed eye position
+   *
+   * @return eye position
+   */
   public PVector getEye() {
     return this.eye;
   }
 
   private void computeEye() {
-    float maxPhi = PConstants.HALF_PI * .9f;
-    this.phi = LXUtils.constrainf(this.phi, -maxPhi, maxPhi);
-    this.radius = LXUtils.constrainf(this.radius, this.minRadius, this.maxRadius);
-    float sintheta = (float) Math.sin(this.theta);
-    float costheta = (float) Math.cos(this.theta);
-    float sinphi = (float) Math.sin(this.phi);
-    float cosphi = (float) Math.cos(this.phi);
-    this.eye.x = this.center.x + this.radius * cosphi * sintheta;
-    this.eye.z = this.center.z - this.radius * cosphi * costheta;
-    this.eye.y = this.center.y + this.radius * sinphi;
+    float rv = this.radiusDamped.getValuef();
+    float tv = this.thetaDamped.getValuef();
+    float pv = this.phiDamped.getValuef();
+
+    float sintheta = (float) Math.sin(tv);
+    float costheta = (float) Math.cos(tv);
+    float sinphi = (float) Math.sin(pv);
+    float cosphi = (float) Math.cos(pv);
+
+    this.eye.x = this.center.x + rv * cosphi * sintheta;
+    this.eye.z = this.center.z - rv * cosphi * costheta;
+    this.eye.y = this.center.y + rv * sinphi;
   }
 
   @Override
@@ -187,6 +270,9 @@ public class UI3dContext extends UIObject implements UITabFocus {
     if (!isVisible()) {
       return;
     }
+
+    // Compute the eye position
+    computeEye();
 
     // Set the camera view
     this.ui.applet.camera(
@@ -196,11 +282,11 @@ public class UI3dContext extends UIObject implements UITabFocus {
     );
 
     // Draw all the components in the scene
-    this.beforeDraw();
+    this.beforeDraw(ui, pg);
     for (UIObject child : this.children) {
       child.draw(ui, pg);
     }
-    this.afterDraw();
+    this.afterDraw(ui, pg);
 
     // Reset the camera
     this.ui.applet.camera();
@@ -228,13 +314,13 @@ public class UI3dContext extends UIObject implements UITabFocus {
   /**
    * Subclasses may override, useful to turn on lighting, etc.
    */
-  protected void beforeDraw() {
+  protected void beforeDraw(UI ui, PGraphics pg) {
   }
 
   /**
    * Subclasses may override, useful to turn off lighting, etc.
    */
-  protected void afterDraw() {
+  protected void afterDraw(UI ui, PGraphics pg) {
   }
 
   @Override
@@ -247,37 +333,39 @@ public class UI3dContext extends UIObject implements UITabFocus {
   @Override
   protected void onMouseDragged(MouseEvent mouseEvent, float mx, float my, float dx, float dy) {
     if (mouseEvent.isShiftDown()) {
-      this.radius += dy;
+      this.radius.incrementValue(dy);
     } else if (mouseEvent.isMetaDown()) {
       this.center.x -= dx;
       this.center.y += dy;
     } else {
-      this.theta -= dx * .003;
-      this.phi += dy * .003;
+      this.theta.incrementValue(-dx * .003);
+      this.phi.incrementValue(dy * .003);
     }
-    computeEye();
   }
 
   @Override
   protected void onMouseWheel(MouseEvent mouseEvent, float mx, float my, float delta) {
-    setRadius(this.radius + delta);
+    this.radius.incrementValue(delta);
   }
 
   @Override
   protected void onKeyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
     float amount = keyEvent.isShiftDown() ? .2f : .02f;
     if (keyCode == java.awt.event.KeyEvent.VK_LEFT) {
-      this.theta += amount;
-      computeEye();
+      this.theta.incrementValue(amount);
     } else if (keyCode == java.awt.event.KeyEvent.VK_RIGHT) {
-      this.theta -= amount;
-      computeEye();
+      this.theta.incrementValue(-amount);
     } else if (keyCode == java.awt.event.KeyEvent.VK_UP) {
-      this.phi -= amount;
-      computeEye();
+      this.phi.incrementValue(-amount);
     } else if (keyCode == java.awt.event.KeyEvent.VK_DOWN) {
-      this.phi += amount;
-      computeEye();
+      this.phi.incrementValue(amount);
     }
+  }
+
+  @Override
+  public void loop(double deltaMs) {
+    this.thetaDamped.loop(deltaMs);
+    this.phiDamped.loop(deltaMs);
+    this.radiusDamped.loop(deltaMs);
   }
 }
