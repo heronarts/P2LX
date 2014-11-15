@@ -79,6 +79,7 @@ ${line}
 		<antcall target="compile" />
 	  	<antcall target="generate.jar"><param name="folder" value="library"/></antcall>
 	  	<antcall target="generate.javadoc" />
+		<antcall target="copyToExamples" />
 		<antcall target="copyToSketchbook"><param name="folder" value="libraries"/></antcall>
 		<antcall target="generate.libprops" />
 		<antcall target="generate.distribution" />
@@ -93,14 +94,19 @@ ${line}
 		<antcall target="parse.file"><param name="file" value="${libprops.destination}"/></antcall>
 	</target>
 	
+	<target name="copyToExamples">
+		<echo message="Copying jar file to the examples." />
+		<copy file="${project.tmp}/${project.name}/library/P2LX.jar" toDir="./examples/P2LXDemo/code" />
+	</target>
+
 	<target name="copyToSketchbook">
-		<echo message="copying files to the ${folder} folder in your sketchbook." />
+		<echo message="Copying files to the ${folder} folder in your sketchbook." />
 		<!-- copy the jar file to processing's sketchbook libraries folder -->
 		<delete dir="${sketchbook.location}/${folder}/${project.name}" />
   	  	<mkdir dir="${sketchbook.location}/${folder}/${project.name}" />
   		<copy todir="${sketchbook.location}/${folder}/${project.name}">
   			<fileset dir="${project.tmp}/${project.name}"/>
-  		</copy> 
+		</copy>
 	</target>
 		
 	<target name="compile">
@@ -171,13 +177,13 @@ ${line}
 	<target name="generate.javadoc" if="is.normal">
 	  	<!-- create the java reference of the library -->
 		<javadoc bottom="Processing library ${project.name} by ${author.name}. ${library.copyright}" 
-				classpath="${classpath.local.location}/minim.jar;${classpath.local.location}/video.jar;${classpath.local.location}/core.jar;${classpath.local.location}/jogl-all.jar;${project.lib}/gson-2.2.4.jar;{project.bin}" 
+				classpath="${classpath.local.location}/minim.jar;${classpath.local.location}/video.jar;${classpath.local.location}/core.jar;${classpath.local.location}/jogl-all.jar;${project.lib}/gson-2.3.jar;{project.bin}" 
 				destdir="${project.tmp}/${project.name}/reference" 
 				verbose="false" 
 				stylesheetfile="build/stylesheet.css" 
-				doctitle="Javadocs: ${project.name}" 
+				doctitle="${project.name} API Specification"
 				version="false" 
-				windowtitle="Javadocs: ${project.name}">
+				windowtitle="${project.name} API">
  			
  			<link href="${javadoc.java.href}" />
 			<link href="${javadoc.processing.href}" />
@@ -238,7 +244,12 @@ ${line}
   	       basedir="${project.dist.version}/tmp/${project.name}-${library.version}"
   	       excludes="**/.DS_Store"
 		/>
-				
+
+		<zip destfile="${project.dist.version}/P2LXDemo.zip"
+		   basedir="./examples/P2LXDemo"
+		   excludes="**/.DS_Store"
+		/>
+
 		<delete dir="${project.dist.version}/tmp" />
 	</target>
 	
