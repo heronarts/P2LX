@@ -90,6 +90,19 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
   private final DampedParameter radiusDamped =
     new DampedParameter(this.radius, this.zoomVelocity, this.zoomAcceleration);
 
+  private final MutableParameter cxParameter = new MutableParameter();
+  private final MutableParameter cyParameter = new MutableParameter();
+  private final MutableParameter czParameter = new MutableParameter();
+
+  private final DampedParameter cxDamped =
+    new DampedParameter(this.cxParameter, this.zoomVelocity, this.zoomAcceleration);
+
+  private final DampedParameter cyDamped =
+    new DampedParameter(this.cyParameter, this.zoomVelocity, this.zoomAcceleration);
+
+  private final DampedParameter czDamped =
+    new DampedParameter(this.czParameter, this.zoomVelocity, this.zoomAcceleration);
+
   // Radius bounds
   private float minRadius = 0, maxRadius = Float.MAX_VALUE;
 
@@ -100,6 +113,9 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
     this.thetaDamped.start();
     this.radiusDamped.start();
     this.phiDamped.start();
+    this.cxDamped.start();
+    this.cyDamped.start();
+    this.czDamped.start();
     computeEye();
     this.radius.addListener(new LXParameterListener() {
       public void onParameterChanged(LXParameter p) {
@@ -261,9 +277,9 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
    * @return this
    */
   public UI3dContext setCenter(float x, float y, float z) {
-    this.center.x = x;
-    this.center.y = y;
-    this.center.z = z;
+    this.cxParameter.setValue(this.center.x = x);
+    this.cyParameter.setValue(this.center.y = y);
+    this.czParameter.setValue(this.center.z = z);
     return this;
   }
 
@@ -295,9 +311,9 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
     float sinphi = (float) Math.sin(pv);
     float cosphi = (float) Math.cos(pv);
 
-    this.eye.x = this.center.x + rv * cosphi * sintheta;
-    this.eye.z = this.center.z - rv * cosphi * costheta;
-    this.eye.y = this.center.y + rv * sinphi;
+    this.eye.x = this.cxDamped.getValuef() + rv * cosphi * sintheta;
+    this.eye.z = this.czDamped.getValuef() - rv * cosphi * costheta;
+    this.eye.y = this.cyDamped.getValuef() + rv * sinphi;
   }
 
   @Override
@@ -312,7 +328,7 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
     // Set the camera view
     this.ui.applet.camera(
       this.eye.x, this.eye.y, this.eye.z,
-      this.center.x, this.center.y, this.center.z,
+      this.cxDamped.getValuef(), this.cyDamped.getValuef(), this.czDamped.getValuef(),
       0, -1, 0
     );
 
@@ -370,8 +386,7 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
     if (mouseEvent.isShiftDown()) {
       this.radius.incrementValue(dy);
     } else if (mouseEvent.isMetaDown()) {
-      this.center.x -= dx;
-      this.center.y += dy;
+      setCenter(this.center.x - dx, this.center.y + dy, this.center.z);
     } else {
       this.theta.incrementValue(-dx * .003);
       this.phi.incrementValue(dy * .003);
@@ -402,5 +417,8 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
     this.thetaDamped.loop(deltaMs);
     this.phiDamped.loop(deltaMs);
     this.radiusDamped.loop(deltaMs);
+    this.cxDamped.loop(deltaMs);
+    this.cyDamped.loop(deltaMs);
+    this.czDamped.loop(deltaMs);
   }
 }
