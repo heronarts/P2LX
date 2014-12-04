@@ -71,4 +71,8 @@ public class UI2dContext extends UI2dComponent implements UI2dContainer {
     }
     pg.image(this.pg, 0, 0);
   }
+
+  protected PGraphics getGraphics() {
+    return this.pg;
+  }
 }
