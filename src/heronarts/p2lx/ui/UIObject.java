@@ -96,6 +96,15 @@ public abstract class UIObject {
   }
 
   /**
+   * Toggle visible state of this component
+   *
+   * @return this
+   */
+  public UIObject toggleVisible() {
+    return setVisible(!isVisible());
+  }
+
+  /**
    * Set whether this object is visible
    *
    * @param visible

@@ -183,6 +183,17 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
   }
 
   /**
+   * Sets perspective angle of the camera in degrees
+   *
+   * @param perspective angle in degrees
+   * @return this
+   */
+  public UI3dContext setPerspective(float perspective) {
+    this.perspective.setValue(perspective);
+    return this;
+  }
+
+  /**
    * Sets the camera's maximum zoom speed
    *
    * @param zoomVelocity Max units/per second radius may change by
