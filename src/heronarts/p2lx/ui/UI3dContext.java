@@ -133,17 +133,17 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
     computeEye();
     this.radius.addListener(new LXParameterListener() {
       public void onParameterChanged(LXParameter p) {
-        float value = radius.getValuef();
+        double value = radius.getValue();
         if (value < minRadius || value > maxRadius) {
-          radius.setValue(LXUtils.constrainf(value, minRadius, maxRadius));
+          radius.setValue(LXUtils.constrain(value, minRadius, maxRadius));
         }
       }
     });
     this.phi.addListener(new LXParameterListener() {
       public void onParameterChanged(LXParameter p) {
-        float value = phi.getValuef();
+        double value = phi.getValue();
         if (value < -MAX_PHI || value > MAX_PHI) {
-          phi.setValue(LXUtils.constrainf(value, -MAX_PHI, MAX_PHI));
+          phi.setValue(LXUtils.constrain(value, -MAX_PHI, MAX_PHI));
         }
       }
     });
