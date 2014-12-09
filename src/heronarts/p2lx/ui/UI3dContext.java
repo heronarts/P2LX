@@ -26,7 +26,9 @@ package heronarts.p2lx.ui;
 
 import heronarts.lx.LXLoopTask;
 import heronarts.lx.LXUtils;
+import heronarts.lx.color.LXColor;
 import heronarts.lx.modulator.DampedParameter;
+import heronarts.lx.parameter.BasicParameter;
 import heronarts.lx.parameter.LXParameter;
 import heronarts.lx.parameter.LXParameterListener;
 import heronarts.lx.parameter.MutableParameter;
@@ -81,6 +83,16 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
    */
   public final MutableParameter rotateAcceleration = new MutableParameter("RAcl", 0);
 
+  /**
+   * Perspective of view
+   */
+  public final BasicParameter perspective = new BasicParameter("Perspective", 60, 30, 150);
+
+  /**
+   * Depth of perspective field, exponential factor of radius by exp(10, Depth)
+   */
+  public final BasicParameter depth = new BasicParameter("Depth", 1, 0, 4);
+
   private final DampedParameter thetaDamped =
     new DampedParameter(this.theta, this.rotateVelocity, this.rotateAcceleration);
 
@@ -104,9 +116,11 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
     new DampedParameter(this.czParameter, this.zoomVelocity, this.zoomAcceleration);
 
   // Radius bounds
-  private float minRadius = 0, maxRadius = Float.MAX_VALUE;
+  private float minRadius = 1, maxRadius = Float.MAX_VALUE;
 
   private static final float MAX_PHI = PConstants.HALF_PI * .9f;
+
+  private boolean showCenter = false;
 
   public UI3dContext(UI ui) {
     setUI(ui);
@@ -269,6 +283,26 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
   }
 
   /**
+   * Determines whether to render a point at the center
+   *
+   * @param showCenter
+   * @return this
+   */
+  public final UI3dContext showCenterPoint(boolean showCenter) {
+    this.showCenter = showCenter;
+    return this;
+  }
+
+  /**
+   * Toggles visibility of a center point
+   *
+   * @return this
+   */
+  public final UI3dContext toggleCenterPoint() {
+    return showCenterPoint(!this.showCenter);
+  }
+
+  /**
    * Sets the center of the scene
    *
    * @param x
@@ -326,21 +360,38 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
     computeEye();
 
     // Set the camera view
-    this.ui.applet.camera(
+    pg.camera(
       this.eye.x, this.eye.y, this.eye.z,
       this.cxDamped.getValuef(), this.cyDamped.getValuef(), this.czDamped.getValuef(),
       0, -1, 0
     );
+    float radiusValue = this.radiusDamped.getValuef();
+    float depthFactor = (float) Math.pow(10, this.depth.getValue());
+    pg.perspective(
+      this.perspective.getValuef() / 180.f * PConstants.PI,
+      pg.width / (float) pg.height,
+      radiusValue / depthFactor,
+      radiusValue * depthFactor
+    );
 
     // Draw all the components in the scene
     this.beforeDraw(ui, pg);
+    if (this.showCenter) {
+      pg.stroke(LXColor.RED);
+      pg.strokeWeight(10);
+      pg.beginShape(PConstants.POINTS);
+      pg.vertex(this.cxDamped.getValuef(), this.cyDamped.getValuef(), this.czDamped.getValuef());
+      pg.endShape();
+      pg.strokeWeight(1);
+    }
     for (UIObject child : this.children) {
       child.draw(ui, pg);
     }
     this.afterDraw(ui, pg);
 
     // Reset the camera
-    this.ui.applet.camera();
+    pg.camera();
+    pg.perspective();
 
     if (hasFocus()) {
       pg.strokeWeight(1);
@@ -386,7 +437,9 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
     if (mouseEvent.isShiftDown()) {
       this.radius.incrementValue(dy);
     } else if (mouseEvent.isMetaDown()) {
-      setCenter(this.center.x - dx, this.center.y + dy, this.center.z);
+      float dcx = dx * (float) Math.cos(this.thetaDamped.getValuef());
+      float dcz = dx * (float) Math.sin(this.thetaDamped.getValuef());
+      setCenter(this.center.x - dcx, this.center.y + dy, this.center.z - dcz);
     } else {
       this.theta.incrementValue(-dx * .003);
       this.phi.incrementValue(dy * .003);
