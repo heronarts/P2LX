@@ -29,6 +29,8 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
+import javax.media.opengl.GL2;
+
 import processing.core.PGraphics;
 import processing.opengl.PGL;
 import processing.opengl.PJOGL;
@@ -47,7 +49,7 @@ public class UIGLPointCloud extends UIPointCloud {
   private final PShader shader;
   private final FloatBuffer vertexData;
   private int vertexBufferObjectName;
-
+  private boolean alphaTest = false;
 
   /**
    * Point cloud for everything in the LX instance
@@ -102,6 +104,18 @@ public class UIGLPointCloud extends UIPointCloud {
     this.lx.applet.endPGL();
   }
 
+  /**
+   * Enable alpha testing for dense point clouds to minimize some forms of
+   * visible billboard aliasing across overlapping points;
+   *
+   * @param alphaTest
+   * @return this
+   */
+  public UIGLPointCloud enableAlphaTest(boolean alphaTest) {
+    this.alphaTest = alphaTest;
+    return this;
+  }
+
   @Override
   protected void onDraw(UI ui, PGraphics pg) {
     int[] colors = this.lx.getColors();
@@ -116,12 +130,14 @@ public class UIGLPointCloud extends UIPointCloud {
       ++i;
     }
 
+    // Get PGL context
     PGL pgl = this.lx.applet.beginPGL();
 
     // Bind to our vertex buffer object, place the new color data
     pgl.bindBuffer(PGL.ARRAY_BUFFER, this.vertexBufferObjectName);
     pgl.bufferData(PGL.ARRAY_BUFFER, this.model.size * 7 * Float.SIZE/8, this.vertexData, PGL.DYNAMIC_DRAW);
 
+    // Set up shader
     this.shader.bind();
     int vertexLocation = pgl.getAttribLocation(this.shader.glProgram, "vertex");
     int colorLocation = pgl.getAttribLocation(this.shader.glProgram, "color");
@@ -129,14 +145,32 @@ public class UIGLPointCloud extends UIPointCloud {
     pgl.enableVertexAttribArray(colorLocation);
     pgl.vertexAttribPointer(vertexLocation, 3, PGL.FLOAT, false, 7 * Float.SIZE/8, 0);
     pgl.vertexAttribPointer(colorLocation, 4, PGL.FLOAT, false, 7 * Float.SIZE/8, 3 * Float.SIZE/8);
-    javax.media.opengl.GL2 gl2 = (javax.media.opengl.GL2) ((PJOGL)pgl).gl;
-    gl2.glPointSize(this.pointWeight);
+
+    // GL2 properties
+    GL2 gl2 = (javax.media.opengl.GL2) ((PJOGL)pgl).gl;
+    gl2.glEnable(GL2.GL_POINT_SPRITE);
+    gl2.glEnable(GL2.GL_POINT_SMOOTH);
+    gl2.glDisable(GL2.GL_TEXTURE_2D);
+    gl2.glPointSize(this.pointSize);
+    gl2.glEnable(GL2.GL_VERTEX_PROGRAM_POINT_SIZE);
+    if (this.alphaTest) {
+      gl2.glEnable(GL2.GL_ALPHA_TEST);
+      gl2.glAlphaFunc(GL2.GL_NOTEQUAL, GL2.GL_ZERO);
+    }
+
+    // Draw the arrays
     pgl.drawArrays(PGL.POINTS, 0, this.model.size);
+
+    // Unbind
+    if (this.alphaTest) {
+      gl2.glDisable(GL2.GL_ALPHA_TEST);
+    }
     pgl.disableVertexAttribArray(vertexLocation);
     pgl.disableVertexAttribArray(colorLocation);
     this.shader.unbind();
-
     pgl.bindBuffer(PGL.ARRAY_BUFFER, 0);
+
+    // Done!
     this.lx.applet.endPGL();
   }
 

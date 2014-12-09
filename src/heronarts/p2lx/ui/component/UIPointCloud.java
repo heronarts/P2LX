@@ -24,13 +24,16 @@
 
 package heronarts.p2lx.ui.component;
 
+import javax.media.opengl.GL2;
+
 import heronarts.lx.model.LXModel;
 import heronarts.lx.model.LXPoint;
 import heronarts.p2lx.P2LX;
 import heronarts.p2lx.ui.UI;
 import heronarts.p2lx.ui.UI3dComponent;
-import processing.core.PConstants;
 import processing.core.PGraphics;
+import processing.opengl.PGL;
+import processing.opengl.PJOGL;
 
 /**
  * Draws a cloud of points in the layer
@@ -44,7 +47,9 @@ public class UIPointCloud extends UI3dComponent {
   /**
    * Weight of points
    */
-  protected float pointWeight = 1;
+  protected float pointSize = 2;
+
+  private float[] pointSizeAttenuation = null;
 
   /**
    * Point cloud for everything in the LX instance
@@ -72,20 +77,54 @@ public class UIPointCloud extends UI3dComponent {
    * @param pointWeight Point weight
    * @return this
    */
-  public UIPointCloud setPointWeight(float pointWeight) {
-    this.pointWeight = pointWeight;
+  public UIPointCloud setPointSize(float pointSize) {
+    this.pointSize = pointSize;
+    return this;
+  }
+
+  /**
+   * Sets point size attenuation, fn = 1/sqrt(constant + linear*d + quadratic*d^2)
+   *
+   * @param a Constant factor
+   * @param b Linear factor
+   * @param c Quadratic factor
+   * @return this
+   */
+  public UIPointCloud setPointSizeAttenuation(float a, float b, float c) {
+    this.pointSizeAttenuation = new float[] { a, b, c };
     return this;
   }
 
   @Override
   protected void onDraw(UI ui, PGraphics pg) {
-    int[] colors = this.lx.getColors();
-    pg.strokeWeight(this.pointWeight);
-    pg.beginShape(PConstants.POINTS);
-    for (LXPoint p : this.model.points) {
-      pg.stroke(colors[p.index]);
-      pg.vertex(p.x, p.y, p.z);
+
+    PGL pgl = this.lx.applet.beginPGL();
+    GL2 gl2 = (javax.media.opengl.GL2) ((PJOGL)pgl).gl;
+    if (this.pointSizeAttenuation != null) {
+      gl2.glEnable(GL2.GL_VERTEX_PROGRAM_POINT_SIZE);
+      gl2.glPointParameterf(GL2.GL_POINT_SIZE_MIN, 1.f);
+      gl2.glPointParameterf(GL2.GL_POINT_SIZE_MAX, this.pointSize);
+      gl2.glPointParameterfv(GL2.GL_POINT_DISTANCE_ATTENUATION, this.pointSizeAttenuation, 0);
+    } else {
+      gl2.glDisable(GL2.GL_VERTEX_PROGRAM_POINT_SIZE);
     }
-    pg.endShape();
+    gl2.glPointSize(this.pointSize);
+    gl2.glEnable(GL2.GL_POINT_SMOOTH);
+    gl2.glDisable(GL2.GL_POINT_SPRITE);
+
+    int[] colors = this.lx.getColors();
+    gl2.glBegin(GL2.GL_POINTS);
+    for (LXPoint p : this.model.points) {
+      int c = colors[p.index];
+      gl2.glColor3ub(
+        (byte) (0xff & (c >>> 16)),
+        (byte) (0xff & (c >>> 8)),
+        (byte) (0xff & c)
+      );
+      gl2.glVertex3f(p.x, p.y, p.z);
+    }
+    gl2.glEnd();
+
+    this.lx.applet.endPGL();
   }
 }
