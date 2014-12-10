@@ -44,9 +44,30 @@ import processing.event.MouseEvent;
  */
 public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
 
+  /**
+   * Mode of interaction from keyboard mouse events
+   */
+  public enum InteractionMode {
+    /**
+     * Camera has a fixed center point, eye rotates around this point and zooms on it
+     */
+    ZOOM,
+
+    /**
+     * Camera has a fixed radius, eye moves around like a FPS video-game
+     */
+    MOVE
+  };
+
+  private InteractionMode interactionMode = InteractionMode.ZOOM;
+
   private final PVector center = new PVector(0, 0, 0);
 
   private final PVector eye = new PVector(0, 0, 0);
+
+  private final PVector centerDamped = new PVector(0, 0, 0);
+
+  private final PVector eyeDamped = new PVector(0, 0, 0);
 
   /**
    * Angle of the eye position about the vertical Z-axis
@@ -66,22 +87,22 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
   /**
    * Max velocity used to damp changes to radius (zoom)
    */
-  public final MutableParameter zoomVelocity = new MutableParameter("ZVel", 2400);
+  public final MutableParameter cameraVelocity = new MutableParameter("CVel", 0);
 
   /**
    * Acceleration used to change camera radius (zoom)
    */
-  public final MutableParameter zoomAcceleration = new MutableParameter("ZAcl", 0);
+  public final MutableParameter cameraAcceleration = new MutableParameter("CAcl", 0);
 
   /**
    * Max velocity used to damp changes to rotation (theta/phi)
    */
-  public final MutableParameter rotateVelocity = new MutableParameter("RVel", 4*Math.PI);
+  public final MutableParameter rotationVelocity = new MutableParameter("RVel", 4*Math.PI);
 
   /**
    * Acceleration used to change rotation (theta/phi)
    */
-  public final MutableParameter rotateAcceleration = new MutableParameter("RAcl", 0);
+  public final MutableParameter rotationAcceleration = new MutableParameter("RAcl", 0);
 
   /**
    * Perspective of view
@@ -94,26 +115,29 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
   public final BasicParameter depth = new BasicParameter("Depth", 1, 0, 4);
 
   private final DampedParameter thetaDamped =
-    new DampedParameter(this.theta, this.rotateVelocity, this.rotateAcceleration);
+    new DampedParameter(this.theta, this.rotationVelocity, this.rotationAcceleration);
 
   private final DampedParameter phiDamped =
-    new DampedParameter(this.phi, this.rotateVelocity, this.rotateAcceleration);
+    new DampedParameter(this.phi, this.rotationVelocity, this.rotationAcceleration);
 
   private final DampedParameter radiusDamped =
-    new DampedParameter(this.radius, this.zoomVelocity, this.zoomAcceleration);
+    new DampedParameter(this.radius, this.cameraVelocity, this.cameraAcceleration);
 
-  private final MutableParameter cxParameter = new MutableParameter();
-  private final MutableParameter cyParameter = new MutableParameter();
-  private final MutableParameter czParameter = new MutableParameter();
+  private final MutableParameter pxParameter = new MutableParameter();
+  private final MutableParameter pyParameter = new MutableParameter();
+  private final MutableParameter pzParameter = new MutableParameter();
 
-  private final DampedParameter cxDamped =
-    new DampedParameter(this.cxParameter, this.zoomVelocity, this.zoomAcceleration);
+  private final DampedParameter pxDamped = new DampedParameter(
+    this.pxParameter, this.cameraVelocity, this.cameraAcceleration
+  );
 
-  private final DampedParameter cyDamped =
-    new DampedParameter(this.cyParameter, this.zoomVelocity, this.zoomAcceleration);
+  private final DampedParameter pyDamped = new DampedParameter(
+    this.pyParameter, this.cameraVelocity, this.cameraAcceleration
+  );
 
-  private final DampedParameter czDamped =
-    new DampedParameter(this.czParameter, this.zoomVelocity, this.zoomAcceleration);
+  private final DampedParameter pzDamped = new DampedParameter(
+    this.pzParameter, this.cameraVelocity, this.cameraAcceleration
+  );
 
   // Radius bounds
   private float minRadius = 1, maxRadius = Float.MAX_VALUE;
@@ -127,10 +151,10 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
     this.thetaDamped.start();
     this.radiusDamped.start();
     this.phiDamped.start();
-    this.cxDamped.start();
-    this.cyDamped.start();
-    this.czDamped.start();
-    computeEye();
+    this.pxDamped.start();
+    this.pyDamped.start();
+    this.pzDamped.start();
+    computePosition();
     this.radius.addListener(new LXParameterListener() {
       public void onParameterChanged(LXParameter p) {
         double value = radius.getValue();
@@ -183,6 +207,34 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
   }
 
   /**
+   * Set interaction mode for mouse/key events.
+   *
+   * @param interactionMode mode
+   * @return this
+   */
+  public UI3dContext setInteractionMode(InteractionMode interactionMode) {
+    if (this.interactionMode != interactionMode) {
+      this.interactionMode = interactionMode;
+      PVector position = this.center;
+      switch (interactionMode) {
+      case ZOOM:
+        position = this.center;
+        break;
+      case MOVE:
+        position = this.eye;
+        break;
+      }
+      this.pxParameter.setValue(position.x);
+      this.pyParameter.setValue(position.y);
+      this.pzParameter.setValue(position.z);
+      this.pxDamped.setValue(position.x);
+      this.pyDamped.setValue(position.y);
+      this.pzDamped.setValue(position.z);
+    }
+    return this;
+  }
+
+  /**
    * Sets perspective angle of the camera in degrees
    *
    * @param perspective angle in degrees
@@ -196,22 +248,22 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
   /**
    * Sets the camera's maximum zoom speed
    *
-   * @param zoomVelocity Max units/per second radius may change by
+   * @param cameraVelocity Max units/per second radius may change by
    * @return this
    */
-  public UI3dContext setZoomVelocity(float zoomVelocity) {
-    this.zoomVelocity.setValue(zoomVelocity);
+  public UI3dContext setCameraVelocity(float cameraVelocity) {
+    this.cameraVelocity.setValue(cameraVelocity);
     return this;
   }
 
   /**
    * Set's the camera's zoom acceleration, 0 is infinite
    *
-   * @param zoomAcceleration
+   * @param cameraAcceleration
    * @return this
    */
-  public UI3dContext setZoomAcceleration(float zoomAcceleration) {
-    this.zoomAcceleration.setValue(zoomAcceleration);
+  public UI3dContext setCameraAcceleration(float cameraAcceleration) {
+    this.cameraAcceleration.setValue(cameraAcceleration);
     return this;
   }
 
@@ -221,8 +273,8 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
    * @param rotateVelocity Max radians/per second viewing angle may change by
    * @return this
    */
-  public UI3dContext setRotateVelocity(float rotateVelocity) {
-    this.rotateVelocity.setValue(rotateVelocity);
+  public UI3dContext setRotationVelocity(float rotationVelocity) {
+    this.rotationVelocity.setValue(rotationVelocity);
     return this;
   }
 
@@ -232,8 +284,8 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
    * @param rotateAcceleration
    * @return this
    */
-  public UI3dContext setRotateAcceleration(float rotateAcceleration) {
-    this.rotateAcceleration.setValue(rotateAcceleration);
+  public UI3dContext setRotationAcceleration(float rotationAcceleration) {
+    this.rotationAcceleration.setValue(rotationAcceleration);
     return this;
   }
 
@@ -314,7 +366,7 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
   }
 
   /**
-   * Sets the center of the scene
+   * Sets the center of the scene, only respected in ZOOM mode
    *
    * @param x
    * @param y
@@ -322,9 +374,30 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
    * @return this
    */
   public UI3dContext setCenter(float x, float y, float z) {
-    this.cxParameter.setValue(this.center.x = x);
-    this.cyParameter.setValue(this.center.y = y);
-    this.czParameter.setValue(this.center.z = z);
+    if (this.interactionMode != InteractionMode.ZOOM) {
+      throw new IllegalStateException("setCenter() only allowed in ZOOM mode");
+    }
+    this.pxParameter.setValue(this.center.x = x);
+    this.pyParameter.setValue(this.center.y = y);
+    this.pzParameter.setValue(this.center.z = z);
+    return this;
+  }
+
+  /**
+   * Sets the eye position, only respected in MOVE mode
+   *
+   * @param x
+   * @param y
+   * @param z
+   * @return this
+   */
+  public UI3dContext setEye(float x, float y, float z) {
+    if (this.interactionMode != InteractionMode.MOVE) {
+      throw new IllegalStateException("setCenter() only allowed in MOVE mode");
+    }
+    this.pxParameter.setValue(this.eye.x = x);
+    this.pyParameter.setValue(this.eye.y = y);
+    this.pzParameter.setValue(this.eye.z = z);
     return this;
   }
 
@@ -346,19 +419,40 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
     return this.eye;
   }
 
-  private void computeEye() {
+  private void computePosition() {
     float rv = this.radiusDamped.getValuef();
-    float tv = this.thetaDamped.getValuef();
-    float pv = this.phiDamped.getValuef();
+    double tv = this.thetaDamped.getValue();
+    double pv = this.phiDamped.getValue();
 
     float sintheta = (float) Math.sin(tv);
     float costheta = (float) Math.cos(tv);
     float sinphi = (float) Math.sin(pv);
     float cosphi = (float) Math.cos(pv);
 
-    this.eye.x = this.cxDamped.getValuef() + rv * cosphi * sintheta;
-    this.eye.z = this.czDamped.getValuef() - rv * cosphi * costheta;
-    this.eye.y = this.cyDamped.getValuef() + rv * sinphi;
+    float px = this.pxDamped.getValuef();
+    float py = this.pyDamped.getValuef();
+    float pz = this.pzDamped.getValuef();
+
+    switch (this.interactionMode) {
+    case ZOOM:
+      this.centerDamped.set(px, py, pz);
+      this.eyeDamped.set(
+        px + rv * cosphi * sintheta,
+        py + rv * sinphi,
+        pz - rv * cosphi * costheta
+      );
+      this.eye.set(this.eyeDamped);
+      break;
+    case MOVE:
+      this.eyeDamped.set(px, py, pz);
+      this.centerDamped.set(
+        px + rv * cosphi * sintheta,
+        py + rv * sinphi,
+        pz + rv * cosphi * costheta
+      );
+      this.center.set(this.centerDamped);
+      break;
+    }
   }
 
   @Override
@@ -367,15 +461,14 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
       return;
     }
 
-    // Compute the eye position
-    computeEye();
-
-    // Set the camera view
+    // Set the camera
+    computePosition();
     pg.camera(
-      this.eye.x, this.eye.y, this.eye.z,
-      this.cxDamped.getValuef(), this.cyDamped.getValuef(), this.czDamped.getValuef(),
+      this.eyeDamped.x, this.eyeDamped.y, this.eyeDamped.z,
+      this.centerDamped.x, this.centerDamped.y, this.centerDamped.z,
       0, -1, 0
     );
+
     float radiusValue = this.radiusDamped.getValuef();
     float depthFactor = (float) Math.pow(10, this.depth.getValue());
     pg.perspective(
@@ -391,7 +484,7 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
       pg.stroke(LXColor.RED);
       pg.strokeWeight(10);
       pg.beginShape(PConstants.POINTS);
-      pg.vertex(this.cxDamped.getValuef(), this.cyDamped.getValuef(), this.czDamped.getValuef());
+      pg.vertex(this.pxDamped.getValuef(), this.pyDamped.getValuef(), this.pzDamped.getValuef());
       pg.endShape();
       pg.strokeWeight(1);
     }
@@ -445,26 +538,63 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
 
   @Override
   protected void onMouseDragged(MouseEvent mouseEvent, float mx, float my, float dx, float dy) {
-    if (mouseEvent.isShiftDown()) {
-      this.radius.incrementValue(dy);
-    } else if (mouseEvent.isMetaDown()) {
-      float dcx = dx * (float) Math.cos(this.thetaDamped.getValuef());
-      float dcz = dx * (float) Math.sin(this.thetaDamped.getValuef());
-      setCenter(this.center.x - dcx, this.center.y + dy, this.center.z - dcz);
-    } else {
-      this.theta.incrementValue(-dx * .003);
-      this.phi.incrementValue(dy * .003);
+    switch (this.interactionMode) {
+    case ZOOM:
+      if (mouseEvent.isShiftDown()) {
+        this.radius.incrementValue(dy);
+      } else if (mouseEvent.isMetaDown()) {
+        float dcx = dx * (float) Math.cos(this.thetaDamped.getValuef());
+        float dcz = dx * (float) Math.sin(this.thetaDamped.getValuef());
+        setCenter(this.center.x - dcx, this.center.y + dy, this.center.z - dcz);
+      } else {
+        this.theta.incrementValue(-dx * .003);
+        this.phi.incrementValue(dy * .003);
+      }
+      break;
+    case MOVE:
+      if (mouseEvent.isMetaDown() || mouseEvent.isShiftDown()) {
+        float costh = (float) Math.cos(this.thetaDamped.getValuef());
+        float sinth = (float) Math.sin(this.thetaDamped.getValuef());;
+        float dex = dx*costh;
+        float dez = -dx*sinth;
+        float dey = -dy;
+        if (mouseEvent.isShiftDown()) {
+          dex -= dy*sinth;
+          dez -= dy*costh;
+          dey = 0;
+        }
+        setEye(this.eye.x + dex, this.eye.y + dey, this.eye.z + dez);
+      } else {
+        this.theta.incrementValue(dx * .003);
+        this.phi.incrementValue(-dy * .003);
+      }
+      break;
     }
   }
 
   @Override
   protected void onMouseWheel(MouseEvent mouseEvent, float mx, float my, float delta) {
-    this.radius.incrementValue(delta);
+    switch (this.interactionMode) {
+    case ZOOM:
+      this.radius.incrementValue(delta);
+      break;
+    case MOVE:
+      float dcx = delta * (float) Math.sin(this.thetaDamped.getValuef());
+      float dcz = delta * (float) Math.cos(this.thetaDamped.getValuef());
+      setEye(this.eye.x - dcx, this.eye.y, this.eye.z - dcz);
+      break;
+    }
   }
 
   @Override
   protected void onKeyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
-    float amount = keyEvent.isShiftDown() ? .2f : .02f;
+    float amount = .02f;
+    if (keyEvent.isShiftDown()) {
+      amount *= 10.f;
+    }
+    if (this.interactionMode == InteractionMode.MOVE) {
+      amount *= -1;
+    }
     if (keyCode == java.awt.event.KeyEvent.VK_LEFT) {
       this.theta.incrementValue(amount);
     } else if (keyCode == java.awt.event.KeyEvent.VK_RIGHT) {
@@ -481,8 +611,8 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
     this.thetaDamped.loop(deltaMs);
     this.phiDamped.loop(deltaMs);
     this.radiusDamped.loop(deltaMs);
-    this.cxDamped.loop(deltaMs);
-    this.cyDamped.loop(deltaMs);
-    this.czDamped.loop(deltaMs);
+    this.pxDamped.loop(deltaMs);
+    this.pyDamped.loop(deltaMs);
+    this.pzDamped.loop(deltaMs);
   }
 }
