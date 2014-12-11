@@ -82,7 +82,7 @@ public abstract class UIParameterControl extends UI2dComponent implements
     return this;
   }
 
-  public LXParameter getParameter() {
+  public LXListenableNormalizedParameter getParameter() {
     return this.parameter;
   }
 
