@@ -87,7 +87,7 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
   /**
    * Max velocity used to damp changes to radius (zoom)
    */
-  public final MutableParameter cameraVelocity = new MutableParameter("CVel", 0);
+  public final MutableParameter cameraVelocity = new MutableParameter("CVel", Float.MAX_VALUE);
 
   /**
    * Acceleration used to change camera radius (zoom)
@@ -469,6 +469,7 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
       0, -1, 0
     );
 
+    // Set perspective projection
     float radiusValue = this.radiusDamped.getValuef();
     float depthFactor = (float) Math.pow(10, this.depth.getValue());
     pg.perspective(
@@ -478,43 +479,55 @@ public class UI3dContext extends UIObject implements UITabFocus, LXLoopTask {
       radiusValue * depthFactor
     );
 
+    // Enable depth test
+    pg.hint(PConstants.ENABLE_DEPTH_TEST);
+
     // Draw all the components in the scene
     this.beforeDraw(ui, pg);
     if (this.showCenter) {
-      pg.stroke(LXColor.RED);
-      pg.strokeWeight(10);
-      pg.beginShape(PConstants.POINTS);
-      pg.vertex(this.pxDamped.getValuef(), this.pyDamped.getValuef(), this.pzDamped.getValuef());
-      pg.endShape();
-      pg.strokeWeight(1);
+      drawCenterDot(pg);
     }
     for (UIObject child : this.children) {
       child.draw(ui, pg);
     }
     this.afterDraw(ui, pg);
 
-    // Reset the camera
+    // Reset the depth test, camera and perspective
+    pg.hint(PConstants.DISABLE_DEPTH_TEST);
     pg.camera();
     pg.perspective();
 
     if (hasFocus()) {
-      pg.strokeWeight(1);
-      pg.stroke(ui.theme.getFocusColor());
-      int focusInset = 2;
-      int focusDash = 10;
-      // Top left
-      pg.line(focusInset, focusInset, focusInset + focusDash, focusInset);
-      pg.line(focusInset, focusInset, focusInset, focusInset + focusDash);
-      // Top right
-      pg.line(ui.applet.width - focusInset, focusInset, ui.applet.width - focusInset - focusDash, focusInset);
-      pg.line(ui.applet.width - focusInset, focusInset, ui.applet.width - focusInset, focusInset + focusDash);
-      // Bottom left
-      pg.line(focusInset, ui.applet.height - focusInset, focusInset + focusDash, ui.applet.height - focusInset);
-      pg.line(focusInset, ui.applet.height - focusInset, focusInset, ui.applet.height - focusInset - focusDash);
-      // Bottom right
-      pg.line(ui.applet.width - focusInset, ui.applet.height - focusInset, ui.applet.width - focusInset - focusDash, ui.applet.height - focusInset);
-      pg.line(ui.applet.width - focusInset, ui.applet.height - focusInset, ui.applet.width - focusInset, ui.applet.height - focusInset - focusDash);
+      drawFocusBorder(ui, pg);
     }
+  }
+
+  private void drawCenterDot(PGraphics pg) {
+    pg.stroke(LXColor.RED);
+    pg.strokeWeight(10);
+    pg.beginShape(PConstants.POINTS);
+    pg.vertex(this.pxDamped.getValuef(), this.pyDamped.getValuef(), this.pzDamped.getValuef());
+    pg.endShape();
+    pg.strokeWeight(1);
+  }
+
+  private void drawFocusBorder(UI ui, PGraphics pg) {
+    pg.strokeWeight(1);
+    pg.stroke(ui.theme.getFocusColor());
+    int focusInset = 2;
+    int focusDash = 10;
+    // Top left
+    pg.line(focusInset, focusInset, focusInset + focusDash, focusInset);
+    pg.line(focusInset, focusInset, focusInset, focusInset + focusDash);
+    // Top right
+    pg.line(ui.applet.width - focusInset, focusInset, ui.applet.width - focusInset - focusDash, focusInset);
+    pg.line(ui.applet.width - focusInset, focusInset, ui.applet.width - focusInset, focusInset + focusDash);
+    // Bottom left
+    pg.line(focusInset, ui.applet.height - focusInset, focusInset + focusDash, ui.applet.height - focusInset);
+    pg.line(focusInset, ui.applet.height - focusInset, focusInset, ui.applet.height - focusInset - focusDash);
+    // Bottom right
+    pg.line(ui.applet.width - focusInset, ui.applet.height - focusInset, ui.applet.width - focusInset - focusDash, ui.applet.height - focusInset);
+    pg.line(ui.applet.width - focusInset, ui.applet.height - focusInset, ui.applet.width - focusInset, ui.applet.height - focusInset - focusDash);
   }
 
   /**

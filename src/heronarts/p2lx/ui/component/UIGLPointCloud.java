@@ -49,7 +49,9 @@ public class UIGLPointCloud extends UIPointCloud {
   private final PShader shader;
   private final FloatBuffer vertexData;
   private int vertexBufferObjectName;
-  private boolean alphaTest = false;
+  private boolean alphaTestEnabled = false;
+
+  private static final float[] NO_ATTENUATION = { 1, 0, 0 };
 
   /**
    * Point cloud for everything in the LX instance
@@ -108,11 +110,11 @@ public class UIGLPointCloud extends UIPointCloud {
    * Enable alpha testing for dense point clouds to minimize some forms of
    * visible billboard aliasing across overlapping points;
    *
-   * @param alphaTest
+   * @param alphaTestEnabled
    * @return this
    */
-  public UIGLPointCloud enableAlphaTest(boolean alphaTest) {
-    this.alphaTest = alphaTest;
+  public UIGLPointCloud setAlphaTestEnabled(boolean alphaTestEnabled) {
+    this.alphaTestEnabled = alphaTestEnabled;
     return this;
   }
 
@@ -131,7 +133,7 @@ public class UIGLPointCloud extends UIPointCloud {
     }
 
     // Get PGL context
-    PGL pgl = this.lx.applet.beginPGL();
+    PGL pgl = pg.beginPGL();
 
     // Bind to our vertex buffer object, place the new color data
     pgl.bindBuffer(PGL.ARRAY_BUFFER, this.vertexBufferObjectName);
@@ -146,6 +148,13 @@ public class UIGLPointCloud extends UIPointCloud {
     pgl.vertexAttribPointer(vertexLocation, 3, PGL.FLOAT, false, 7 * Float.SIZE/8, 0);
     pgl.vertexAttribPointer(colorLocation, 4, PGL.FLOAT, false, 7 * Float.SIZE/8, 3 * Float.SIZE/8);
 
+    this.shader.set("pointSize", this.pointSize);
+    if (this.pointSizeAttenuation != null) {
+      this.shader.set("attenuation", this.pointSizeAttenuation, 3);
+    } else {
+      this.shader.set("attenuation", NO_ATTENUATION, 3);
+    }
+
     // GL2 properties
     GL2 gl2 = (javax.media.opengl.GL2) ((PJOGL)pgl).gl;
     gl2.glEnable(GL2.GL_POINT_SPRITE);
@@ -153,7 +162,7 @@ public class UIGLPointCloud extends UIPointCloud {
     gl2.glDisable(GL2.GL_TEXTURE_2D);
     gl2.glPointSize(this.pointSize);
     gl2.glEnable(GL2.GL_VERTEX_PROGRAM_POINT_SIZE);
-    if (this.alphaTest) {
+    if (this.alphaTestEnabled) {
       gl2.glEnable(GL2.GL_ALPHA_TEST);
       gl2.glAlphaFunc(GL2.GL_NOTEQUAL, GL2.GL_ZERO);
     }
@@ -162,7 +171,7 @@ public class UIGLPointCloud extends UIPointCloud {
     pgl.drawArrays(PGL.POINTS, 0, this.model.size);
 
     // Unbind
-    if (this.alphaTest) {
+    if (this.alphaTestEnabled) {
       gl2.glDisable(GL2.GL_ALPHA_TEST);
     }
     pgl.disableVertexAttribArray(vertexLocation);
@@ -171,7 +180,7 @@ public class UIGLPointCloud extends UIPointCloud {
     pgl.bindBuffer(PGL.ARRAY_BUFFER, 0);
 
     // Done!
-    this.lx.applet.endPGL();
+    pg.endPGL();
   }
 
 }

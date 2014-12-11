@@ -49,7 +49,7 @@ public class UIPointCloud extends UI3dComponent {
    */
   protected float pointSize = 2;
 
-  private float[] pointSizeAttenuation = null;
+  protected float[] pointSizeAttenuation = null;
 
   /**
    * Point cloud for everything in the LX instance
@@ -83,6 +83,16 @@ public class UIPointCloud extends UI3dComponent {
   }
 
   /**
+   * Disable point size attenuation
+   *
+   * @return this
+   */
+  public UIPointCloud disablePointSizeAttenuation() {
+    this.pointSizeAttenuation = null;
+    return this;
+  }
+
+  /**
    * Sets point size attenuation, fn = 1/sqrt(constant + linear*d + quadratic*d^2)
    *
    * @param a Constant factor
@@ -91,14 +101,19 @@ public class UIPointCloud extends UI3dComponent {
    * @return this
    */
   public UIPointCloud setPointSizeAttenuation(float a, float b, float c) {
-    this.pointSizeAttenuation = new float[] { a, b, c };
+    if (this.pointSizeAttenuation == null) {
+      this.pointSizeAttenuation = new float[3];
+    }
+    this.pointSizeAttenuation[0] = a;
+    this.pointSizeAttenuation[1] = b;
+    this.pointSizeAttenuation[2] = c;
     return this;
   }
 
   @Override
   protected void onDraw(UI ui, PGraphics pg) {
 
-    PGL pgl = this.lx.applet.beginPGL();
+    PGL pgl = pg.beginPGL();
     GL2 gl2 = (javax.media.opengl.GL2) ((PJOGL)pgl).gl;
     if (this.pointSizeAttenuation != null) {
       gl2.glEnable(GL2.GL_VERTEX_PROGRAM_POINT_SIZE);
@@ -109,8 +124,9 @@ public class UIPointCloud extends UI3dComponent {
       gl2.glDisable(GL2.GL_VERTEX_PROGRAM_POINT_SIZE);
     }
     gl2.glPointSize(this.pointSize);
-    gl2.glEnable(GL2.GL_POINT_SMOOTH);
     gl2.glDisable(GL2.GL_POINT_SPRITE);
+    gl2.glEnable(GL2.GL_POINT_SMOOTH);
+    gl2.glDisable(GL2.GL_TEXTURE_2D);
 
     int[] colors = this.lx.getColors();
     gl2.glBegin(GL2.GL_POINTS);
@@ -125,6 +141,6 @@ public class UIPointCloud extends UI3dComponent {
     }
     gl2.glEnd();
 
-    this.lx.applet.endPGL();
+    pg.endPGL();
   }
 }
