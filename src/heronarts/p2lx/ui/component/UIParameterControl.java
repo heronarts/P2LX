@@ -135,7 +135,7 @@ public abstract class UIParameterControl extends UI2dComponent implements
       if (this.parameter instanceof DiscreteParameter) {
         labelText = "" + (int) this.parameter.getValue();
       } else if (this.parameter instanceof BooleanParameter) {
-        labelText = (this.parameter.getValue() > 0) ? "On" : "Off";
+        labelText = (this.parameter.getValue() > 0) ? "ON" : "OFF";
       } else {
         labelText = String.format("%.2f", this.parameter.getValue());
       }
@@ -147,23 +147,18 @@ public abstract class UIParameterControl extends UI2dComponent implements
       labelText = "-";
     }
 
-    drawLabel(ui, pg, labelText, 0, this.height - LABEL_HEIGHT, this.width);
-  }
-
-  protected static void drawLabel(UI ui, PGraphics pg, String labelText, float x, float y, float w) {
-
     pg.noStroke();
     pg.fill(ui.theme.getControlBackgroundColor());
-    pg.rect(x, y, w, LABEL_HEIGHT);
+    pg.rect(0, this.height - LABEL_HEIGHT, this.width, LABEL_HEIGHT);
     pg.fill(ui.theme.getControlTextColor());
     pg.textAlign(PConstants.CENTER);
     pg.textFont(ui.theme.getLabelFont());
 
-    while (pg.textWidth(labelText) > (w - TEXT_MARGIN)) {
+    while (pg.textWidth(labelText) > (this.width - TEXT_MARGIN)) {
       labelText = labelText.substring(0, labelText.length() - 1);
     }
 
-    pg.text(labelText, w/2, y + LABEL_HEIGHT - TEXT_MARGIN);
+    pg.text(labelText, this.width/2, this.height - TEXT_MARGIN);
   }
 
   @Override
@@ -183,6 +178,15 @@ public abstract class UIParameterControl extends UI2dComponent implements
       } else if ((keyCode == java.awt.event.KeyEvent.VK_RIGHT)
           || (keyCode == java.awt.event.KeyEvent.VK_UP)) {
         dp.setValue(dp.getValuei() + times);
+      }
+    } else if (this.parameter instanceof BooleanParameter) {
+      BooleanParameter bp = (BooleanParameter) this.parameter;
+      if ((keyCode == java.awt.event.KeyEvent.VK_LEFT)
+        || (keyCode == java.awt.event.KeyEvent.VK_DOWN)) {
+        bp.setValue(false);
+      } else if ((keyCode == java.awt.event.KeyEvent.VK_RIGHT)
+        || (keyCode == java.awt.event.KeyEvent.VK_UP)) {
+        bp.setValue(true);
       }
     } else {
       double amount = keyEvent.isShiftDown() ? .05f : .01f;

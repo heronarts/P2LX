@@ -46,8 +46,6 @@ public class UIButton extends UI2dTextComponent implements UIFocus {
   private String activeLabel = "";
   private String inactiveLabel = "";
 
-  private boolean showParameterLabel = false;
-
   private BooleanParameter parameter = null;
 
   private final LXParameterListener parameterListener = new LXParameterListener() {
@@ -88,26 +86,14 @@ public class UIButton extends UI2dTextComponent implements UIFocus {
     return this;
   }
 
-  public UIButton showParameterLabel(boolean showParameterLabel) {
-    if (this.showParameterLabel != showParameterLabel) {
-      this.showParameterLabel = showParameterLabel;
-      redraw();
-    }
-    return this;
-  }
-
   @Override
   protected void onDraw(UI ui, PGraphics pg) {
     String label = this.active ? this.activeLabel : this.inactiveLabel;
     if ((label != null) && (label.length() > 0)) {
-      if (this.showParameterLabel) {
-        UIParameterControl.drawLabel(ui, pg, label, 0, this.height + UIParameterControl.LABEL_MARGIN, this.width);
-      } else {
-        pg.fill(this.active ? 0xffffffff : getFontColor());
-        pg.textFont(hasFont() ? getFont() : ui.theme.getControlFont());
-        pg.textAlign(PConstants.CENTER);
-        pg.text(label, this.width / 2, (int) (this.height * .75));
-      }
+      pg.fill(this.active ? 0xffffffff : getFontColor());
+      pg.textFont(hasFont() ? getFont() : ui.theme.getControlFont());
+      pg.textAlign(PConstants.CENTER);
+      pg.text(label, this.width / 2, (int) (this.height * .75));
     }
   }
 
