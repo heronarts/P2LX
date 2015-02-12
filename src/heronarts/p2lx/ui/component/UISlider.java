@@ -39,6 +39,10 @@ public class UISlider extends UIParameterControl implements UIFocus {
   private final Direction direction;
 
   private static final float HANDLE_WIDTH = 12;
+  private static final float PADDING = 2;
+  private static final float GROOVE = 4;
+
+  private final float handleHeight;
 
   public UISlider() {
     this(0, 0, 0, 0);
@@ -52,6 +56,7 @@ public class UISlider extends UIParameterControl implements UIFocus {
     super(x, y, w, h);
     setBackgroundColor(UI.get().theme.getWindowBackgroundColor());
     this.direction = direction;
+    this.handleHeight = h;
   }
 
   @Override
@@ -60,25 +65,27 @@ public class UISlider extends UIParameterControl implements UIFocus {
     pg.fill(ui.theme.getControlBackgroundColor());
     switch (this.direction) {
     case HORIZONTAL:
-      pg.rect(4, this.height / 2 - 2, this.width - 8, 4);
+      pg.rect(PADDING, this.handleHeight / 2 - GROOVE/2, this.width - 2*PADDING, GROOVE);
       pg.fill(isEnabled() ? ui.theme.getPrimaryColor() : ui.theme.getControlDisabledColor());
-      pg.rect(4, this.height / 2 - 2, (int) ((this.width - 8) * getNormalized()), 4);
+      pg.rect(PADDING, this.handleHeight / 2 - GROOVE/2, (int) ((this.width - 2*PADDING) * getNormalized()), GROOVE);
       pg.fill(ui.theme.getControlDisabledColor());
       pg.stroke(ui.theme.getControlBorderColor());
-      pg.rect((int) (4 + getNormalized() * (this.width - 8 - HANDLE_WIDTH)), 4,
-          HANDLE_WIDTH, this.height - 8);
+      pg.rect((int) (PADDING + getNormalized() * (this.width - 2*PADDING - HANDLE_WIDTH)), PADDING,
+          HANDLE_WIDTH, this.handleHeight - 2*PADDING);
       break;
     case VERTICAL:
-      pg.rect(this.width / 2 - 2, 4, 4, this.height - 8);
+      pg.rect(this.width / 2 - GROOVE/2, PADDING, GROOVE, this.handleHeight - 2*PADDING);
       pg.fill(isEnabled() ? ui.theme.getPrimaryColor() : ui.theme.getControlDisabledColor());
-      int fillSize = (int) (getNormalized() * (this.height - 8));
-      pg.rect(this.width / 2 - 2, this.height - 4 - fillSize, 4, fillSize);
+      int fillSize = (int) (getNormalized() * (this.handleHeight - 2*PADDING));
+      pg.rect(this.width / 2 - GROOVE/2, this.handleHeight - PADDING - fillSize, GROOVE, fillSize);
       pg.fill(ui.theme.getControlDisabledColor());
       pg.stroke(ui.theme.getControlBorderColor());
-      pg.rect(4, (int) (4 + (1 - getNormalized())
-          * (this.height - 8 - HANDLE_WIDTH)), this.width - 8, HANDLE_WIDTH);
+      pg.rect(PADDING, (int) (PADDING + (1 - getNormalized())
+          * (this.handleHeight - 2*PADDING - HANDLE_WIDTH)), this.width - 2*PADDING, HANDLE_WIDTH);
       break;
     }
+
+    super.onDraw(ui, pg);
   }
 
   private boolean editing = false;
@@ -87,19 +94,20 @@ public class UISlider extends UIParameterControl implements UIFocus {
 
   @Override
   protected void onMousePressed(MouseEvent mouseEvent, float mx, float my) {
+    super.onMousePressed(mouseEvent, mx, my);
     float mp, dim;
     double handleEdge;
     boolean isVertical = false;
     switch (this.direction) {
     case VERTICAL:
-      handleEdge = 4 + (1 - getNormalized()) * (this.height - 8 - HANDLE_WIDTH);
+      handleEdge = PADDING + (1 - getNormalized()) * (this.handleHeight - 2*PADDING - HANDLE_WIDTH);
       mp = my;
-      dim = this.height;
+      dim = this.handleHeight;
       isVertical = true;
       break;
     default:
     case HORIZONTAL:
-      handleEdge = 4 + getNormalized() * (this.width - 8 - HANDLE_WIDTH);
+      handleEdge = PADDING + getNormalized() * (this.width - 2*PADDING - HANDLE_WIDTH);
       mp = mx;
       dim = this.width;
       break;
@@ -123,6 +131,7 @@ public class UISlider extends UIParameterControl implements UIFocus {
 
   @Override
   protected void onMouseReleased(MouseEvent mouseEvent, float mx, float my) {
+    super.onMouseReleased(mouseEvent, mx, my);
     this.editing = false;
   }
 
@@ -133,7 +142,7 @@ public class UISlider extends UIParameterControl implements UIFocus {
       switch (this.direction) {
       case VERTICAL:
         mp = my;
-        dim = this.height;
+        dim = this.handleHeight;
         setNormalized(1 - LXUtils.constrain((mp - HANDLE_WIDTH / 2. - 4)
             / (dim - 8 - HANDLE_WIDTH), 0, 1));
         break;

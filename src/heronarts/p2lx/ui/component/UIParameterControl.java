@@ -24,8 +24,12 @@
 
 package heronarts.p2lx.ui.component;
 
+import processing.core.PConstants;
+import processing.core.PGraphics;
 import processing.event.KeyEvent;
+import processing.event.MouseEvent;
 import heronarts.lx.LXUtils;
+import heronarts.lx.parameter.BooleanParameter;
 import heronarts.lx.parameter.DiscreteParameter;
 import heronarts.lx.parameter.LXListenableNormalizedParameter;
 import heronarts.lx.parameter.LXParameter;
@@ -36,12 +40,22 @@ import heronarts.p2lx.ui.UI2dComponent;
 public abstract class UIParameterControl extends UI2dComponent implements
     LXParameterListener {
 
+  protected final static int LABEL_MARGIN = 2;
+
+  protected final static int LABEL_HEIGHT = 12;
+
+  private final static int TEXT_MARGIN = 2;
+
+  private boolean showValue = false;
+
   protected LXListenableNormalizedParameter parameter = null;
 
   protected boolean enabled = true;
 
+  private String label = null;
+
   protected UIParameterControl(float x, float y, float w, float h) {
-    super(x, y, w, h);
+    super(x, y, w, h + LABEL_MARGIN + LABEL_HEIGHT);
   }
 
   public UIParameterControl setEnabled(boolean enabled) {
@@ -54,6 +68,14 @@ public abstract class UIParameterControl extends UI2dComponent implements
 
   public boolean isEnabled() {
     return (this.parameter != null) && this.enabled;
+  }
+
+  public UIParameterControl setLabel(String label) {
+    if (this.label != label) {
+      this.label = label;
+      redraw();
+    }
+    return this;
   }
 
   @Override
@@ -98,8 +120,57 @@ public abstract class UIParameterControl extends UI2dComponent implements
     return this;
   }
 
+  private void setShowValue(boolean showValue) {
+    if (showValue != this.showValue) {
+      this.showValue = showValue;
+      redraw();
+    }
+  }
+
+  @Override
+  protected void onDraw(UI ui, PGraphics pg) {
+
+    String labelText;
+    if (this.showValue && (this.parameter != null)) {
+      if (this.parameter instanceof DiscreteParameter) {
+        labelText = "" + (int) this.parameter.getValue();
+      } else if (this.parameter instanceof BooleanParameter) {
+        labelText = (this.parameter.getValue() > 0) ? "On" : "Off";
+      } else {
+        labelText = String.format("%.2f", this.parameter.getValue());
+      }
+    } else {
+      labelText = (this.label != null) ? this.label :
+        ((this.parameter != null) ? this.parameter.getLabel() : null);
+    }
+    if (labelText == null) {
+      labelText = "-";
+    }
+
+    drawLabel(ui, pg, labelText, 0, this.height - LABEL_HEIGHT, this.width);
+  }
+
+  protected static void drawLabel(UI ui, PGraphics pg, String labelText, float x, float y, float w) {
+
+    pg.noStroke();
+    pg.fill(ui.theme.getControlBackgroundColor());
+    pg.rect(x, y, w, LABEL_HEIGHT);
+    pg.fill(ui.theme.getControlTextColor());
+    pg.textAlign(PConstants.CENTER);
+    pg.textFont(ui.theme.getLabelFont());
+
+    while (pg.textWidth(labelText) > (w - TEXT_MARGIN)) {
+      labelText = labelText.substring(0, labelText.length() - 1);
+    }
+
+    pg.text(labelText, w/2, y + LABEL_HEIGHT - TEXT_MARGIN);
+  }
+
   @Override
   protected void onKeyPressed(KeyEvent keyEvent, char keyChar, int keyCode) {
+    if ((keyChar == ' ') || (keyCode == java.awt.event.KeyEvent.VK_ENTER)) {
+      setShowValue(true);
+    }
     if (!isEnabled()) {
       return;
     }
@@ -123,6 +194,28 @@ public abstract class UIParameterControl extends UI2dComponent implements
         setNormalized(LXUtils.constrain(getNormalized() + amount, 0, 1));
       }
     }
+  }
+
+  @Override
+  protected void onKeyReleased(KeyEvent keyEvent, char keyChar, int keyCode) {
+    if ((keyChar == ' ') || (keyCode == java.awt.event.KeyEvent.VK_ENTER)) {
+      setShowValue(false);
+    }
+  }
+
+  @Override
+  protected void onMousePressed(MouseEvent mouseEvent, float mx, float my) {
+    setShowValue(true);
+  }
+
+  @Override
+  protected void onMouseReleased(MouseEvent mouseEvent, float mx, float my) {
+    setShowValue(false);
+  }
+
+  @Override
+  protected void onBlur() {
+    setShowValue(false);
   }
 
 }
