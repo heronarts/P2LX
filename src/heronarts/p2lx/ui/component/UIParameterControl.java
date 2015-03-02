@@ -54,6 +54,8 @@ public abstract class UIParameterControl extends UI2dComponent implements
 
   private String label = null;
 
+  private boolean showLabel = true;
+
   protected UIParameterControl(float x, float y, float w, float h) {
     super(x, y, w, h + LABEL_MARGIN + LABEL_HEIGHT);
   }
@@ -68,6 +70,19 @@ public abstract class UIParameterControl extends UI2dComponent implements
 
   public boolean isEnabled() {
     return (this.parameter != null) && this.enabled;
+  }
+
+  public UIParameterControl setShowLabel(boolean showLabel) {
+    if (this.showLabel != showLabel) {
+      this.showLabel = showLabel;
+      if (this.showLabel) {
+        setSize(this.width, this.height + LABEL_MARGIN + LABEL_HEIGHT);
+      } else {
+        setSize(this.width, this.height - LABEL_MARGIN - LABEL_HEIGHT);
+      }
+      redraw();
+    }
+    return this;
   }
 
   public UIParameterControl setLabel(String label) {
@@ -129,7 +144,12 @@ public abstract class UIParameterControl extends UI2dComponent implements
 
   @Override
   protected void onDraw(UI ui, PGraphics pg) {
+    if (this.showLabel) {
+      drawLabel(ui, pg);
+    }
+  }
 
+  private void drawLabel(UI ui, PGraphics pg) {
     String labelText;
     if (this.showValue && (this.parameter != null)) {
       if (this.parameter instanceof DiscreteParameter) {
