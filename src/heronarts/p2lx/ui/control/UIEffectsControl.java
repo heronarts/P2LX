@@ -1,8 +1,28 @@
+/**
+ * Copyright 2015- Mark C. Slee, Heron Arts LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * @author L8on <lwallace@gmail.com>
+ */
+
 package heronarts.p2lx.ui.control;
 
 import heronarts.lx.LX;
 import heronarts.lx.LXChannel;
 import heronarts.lx.effect.LXEffect;
+import heronarts.lx.parameter.LXListenableNormalizedParameter;
+import heronarts.lx.parameter.LXParameter;
 import heronarts.p2lx.ui.UI;
 import heronarts.p2lx.ui.UIWindow;
 import heronarts.p2lx.ui.component.UIItemList;
@@ -25,7 +45,8 @@ public class UIEffectsControl extends UIWindow {
   private final static int BASE_HEIGHT = 174;
   public final static int WIDTH = 140;
 
-  private final List<LXEffect> effects;// = new ArrayList<LXEffect>();
+  private final List<LXEffect> effects; 
+  private UIKnob[] knobs;
   private LXEffect selectedEffect;
 
   public UIEffectsControl(UI ui, LX lx, float x, float y) {
@@ -75,7 +96,7 @@ public class UIEffectsControl extends UIWindow {
         .addToContainer(this);
     yp += effectList.getHeight() + 10;
 
-    final UIKnob[] knobs = new UIKnob[numKnobs];
+    this.knobs = new UIKnob[numKnobs];
     for (int ki = 0; ki < knobs.length; ++ki) {
       knobs[ki] = new UIKnob(5 + 34 * (ki % KNOBS_PER_ROW), yp
           + (ki / KNOBS_PER_ROW) * KNOB_ROW_HEIGHT);
@@ -85,6 +106,20 @@ public class UIEffectsControl extends UIWindow {
 
   private void selectEffect(LXEffect effect) {
     this.selectedEffect = effect;
+
+    int pi = 0;
+    for (LXParameter parameter : effect.getParameters()) {
+      if (pi >= knobs.length) {
+        break;
+      }
+      if (parameter instanceof LXListenableNormalizedParameter) {
+        knobs[pi++].setParameter((LXListenableNormalizedParameter) parameter);
+      }
+    }
+
+    while (pi < knobs.length) {
+      knobs[pi++].setParameter(null);
+    }
   }
 
   private class EffectScrollItem extends UIItemList.AbstractItem {
