@@ -66,11 +66,11 @@ void setup() {
     .setTheta(PI/24)
     .setPhi(PI/24)
     
-    .setRotateVelocity(12*PI)
-    .setRotateAcceleration(3*PI)
+    .setRotationVelocity(12*PI)
+    .setRotationAcceleration(3*PI)
     
     // Let's add a point cloud of our animation points
-    .addComponent(new UIPointCloud(lx, model).setPointWeight(3))
+    .addComponent(new UIPointCloud(lx, model).setPointSize(3))
     
     // And a custom UI object of our own
     .addComponent(new UIWalls())
