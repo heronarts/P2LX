@@ -45,8 +45,7 @@ public class UIEffectsControl extends UIWindow {
   private final static int BASE_HEIGHT = 174;
   public final static int WIDTH = 140;
 
-  private final List<LXEffect> effects; 
-  private UIKnob[] knobs;
+  private final UIKnob[] knobs;
   private LXEffect selectedEffect;
 
   public UIEffectsControl(UI ui, LX lx, float x, float y) {
@@ -80,7 +79,6 @@ public class UIEffectsControl extends UIWindow {
   public UIEffectsControl(UI ui, List<LXEffect> effects, String label, int numKnobs, float x, float y) {
     super(ui, label, x, y, WIDTH, BASE_HEIGHT + KNOB_ROW_HEIGHT * (numKnobs / KNOBS_PER_ROW));
 
-    this.effects = effects;
     int yp = TITLE_LABEL_HEIGHT;
 
     List<UIItemList.Item> items = new ArrayList<UIItemList.Item>();
@@ -88,12 +86,12 @@ public class UIEffectsControl extends UIWindow {
       items.add(new EffectScrollItem(eff));
     }
     final UIItemList effectList =
-        new UIItemList(1, yp, this.width - 2, 140)
-            .setItems(items);
+      new UIItemList(1, yp, this.width - 2, 140)
+      .setItems(items);
 
     effectList
-        .setBackgroundColor(ui.theme.getWindowBackgroundColor())
-        .addToContainer(this);
+      .setBackgroundColor(ui.theme.getWindowBackgroundColor())
+      .addToContainer(this);
     yp += effectList.getHeight() + 10;
 
     this.knobs = new UIKnob[numKnobs];
@@ -102,6 +100,10 @@ public class UIEffectsControl extends UIWindow {
           + (ki / KNOBS_PER_ROW) * KNOB_ROW_HEIGHT);
       knobs[ki].addToContainer(this);
     }
+
+    if (effects.size() > 0) {
+      selectEffect(effects.get(0));
+    }
   }
 
   private void selectEffect(LXEffect effect) {
@@ -109,24 +111,23 @@ public class UIEffectsControl extends UIWindow {
 
     int pi = 0;
     for (LXParameter parameter : effect.getParameters()) {
-      if (pi >= knobs.length) {
+      if (pi >= this.knobs.length) {
         break;
       }
       if (parameter instanceof LXListenableNormalizedParameter) {
-        knobs[pi++].setParameter((LXListenableNormalizedParameter) parameter);
+        this.knobs[pi++].setParameter((LXListenableNormalizedParameter) parameter);
       }
     }
 
-    while (pi < knobs.length) {
-      knobs[pi++].setParameter(null);
+    while (pi < this.knobs.length) {
+      this.knobs[pi++].setParameter(null);
     }
   }
 
   private class EffectScrollItem extends UIItemList.AbstractItem {
 
-    private LXEffect effect;
-
-    private String label;
+    private final LXEffect effect;
+    private final String label;
 
     EffectScrollItem(LXEffect effect) {
       this.effect = effect;
@@ -143,25 +144,26 @@ public class UIEffectsControl extends UIWindow {
 
     @Override
     public boolean isPending() {
-      return effect.isEnabled();
+      return this.effect.isEnabled();
     }
 
     @Override
     public void onMousePressed() {
       if (!this.isSelected()) {
-        selectEffect(effect);
+        selectEffect(this.effect);
       }
 
-      if (effect.isMomentary()) {
-        effect.enable();
+      if (this.effect.isMomentary()) {
+        this.effect.enable();
       } else {
-        effect.toggle();
+        this.effect.toggle();
       }
     }
 
+    @Override
     public void onMouseReleased() {
-      if (effect.isMomentary()) {
-        effect.disable();
+      if (this.effect.isMomentary()) {
+        this.effect.disable();
       }
     }
   }
